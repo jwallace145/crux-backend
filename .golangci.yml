@@ -1,0 +1,151 @@
+# golangci-lint configuration
+# Documentation: https://golangci-lint.run/usage/configuration/
+
+run:
+  # Timeout for analysis
+  timeout: 5m
+
+  # Include test files
+  tests: true
+
+  # Build tags
+  build-tags:
+    - integration
+
+  # Go version to target
+  go: "1.24"
+
+# Output configuration
+output:
+  # Colored output
+  colored-line-number: true
+
+  # Print lines of code with issue
+  print-issued-lines: true
+
+  # Print linter name in the end of issue text
+  print-linter-name: true
+
+  # Sort results by file, line, and column
+  sort-results: true
+
+# Linters to enable
+linters:
+  enable:
+    # Enabled by default
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Vet examines Go source code (includes shadow checking)
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Advanced Go linter
+    - unused        # Check for unused constants, variables, functions
+
+    # Additional recommended linters
+    - bodyclose     # Check HTTP body is closed
+    - gocritic      # Opinionated Go linter
+    - gocyclo       # Cyclomatic complexity
+    - gofmt         # Check formatting
+    - goimports     # Check import formatting
+    - gosec         # Security issues
+    - misspell      # Spelling mistakes
+    - revive        # Replacement for golint
+    - unconvert     # Unnecessary type conversions
+    - unparam       # Unused function parameters
+    - whitespace    # Unnecessary whitespace
+
+  disable:
+    - exhaustive    # Too strict for switches
+    - wrapcheck     # Too noisy for error wrapping
+
+# Linter-specific settings
+linters-settings:
+  # errcheck configuration
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`
+    check-type-assertions: true
+    # Report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`
+    check-blank: false
+
+  # govet configuration
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+
+  # gocyclo configuration
+  gocyclo:
+    # Minimal cyclomatic complexity to report
+    min-complexity: 15
+
+  # golint configuration
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+      - name: package-comments
+        severity: warning
+        disabled: false
+
+  # gofmt configuration
+  gofmt:
+    simplify: true
+
+  # goimports configuration
+  goimports:
+    local-prefixes: github.com/jwallace145/crux-backend
+
+  # gosec configuration
+  gosec:
+    excludes:
+      - G104  # Unhandled errors (too noisy)
+      - G114  # Use of net/http serve function with no timeout
+
+  # misspell configuration
+  misspell:
+    locale: US
+
+# Issues configuration
+issues:
+  # Maximum issues count per linter
+  max-issues-per-linter: 50
+
+  # Maximum count of issues with the same text
+  max-same-issues: 3
+
+  # Directories to exclude
+  exclude-dirs:
+    - vendor
+    - bin
+    - tmp
+    - testdata
+
+  # Files to exclude
+  exclude-files:
+    - ".*\\.pb\\.go$"
+    - ".*_test\\.go$"  # Remove this if you want to lint tests
+
+  # Exclude specific issues
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
+
+    # Exclude known false positives
+    - text: "weak cryptographic primitive"
+      linters:
+        - gosec
+
+    # Exclude shadow checking on err variable
+    - text: "shadow: declaration of \"err\""
+      linters:
+        - govet
+
+  # Show all issues from a linter
+  new: false
+
+  # Fix issues automatically where possible
+  fix: false

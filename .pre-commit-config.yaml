@@ -1,0 +1,78 @@
+# Pre-commit hooks for Go code quality
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^vendor/
+      - id: end-of-file-fixer
+        exclude: ^vendor/
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+
+  # Go formatting
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      # Format code with gofmt
+      - id: go-fmt
+        args: [-w, -s]  # Write changes, simplify code
+
+      # Format imports with goimports
+      - id: go-imports
+        args: [-w]
+
+      # Run go mod tidy
+      - id: go-mod-tidy
+
+      # Vet code for suspicious constructs
+      - id: go-vet
+
+      # Run unit tests
+      - id: go-unit-tests
+        args: [-timeout=60s, -short]
+
+      # Lint with golangci-lint
+      - id: golangci-lint
+        args: [--timeout=5m]
+
+  # Additional Go checks
+  - repo: local
+    hooks:
+      # Check for TODO/FIXME without issue numbers
+      - id: check-todos
+        name: Check TODOs have issue references
+        entry: bash -c 'if grep -rn "TODO\|FIXME" --include="*.go" --exclude-dir=vendor . | grep -v "#[0-9]"; then echo "TODOs must reference an issue number (e.g., TODO(#123))"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      # Ensure no debug prints
+      - id: no-debug-prints
+        name: Check for debug print statements
+        entry: bash -c 'if grep -rn "fmt.Println\|log.Println" --include="*.go" --exclude-dir=vendor --exclude-dir=internal/db . | grep -v "// allow-print"; then echo "Found debug print statements. Use structured logging or add // allow-print comment"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+# Global settings
+default_language_version:
+  python: python3
+  golang: "1.24"
+
+# Files to exclude from all hooks
+exclude: |
+  (?x)(
+    ^vendor/|
+    ^bin/|
+    ^tmp/|
+    \.pb\.go$
+  )

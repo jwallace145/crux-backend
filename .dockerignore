@@ -1,0 +1,61 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+LICENSE
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files (use docker-compose env instead)
+.env
+.env.*
+*.env
+
+# Build artifacts
+bin/
+tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+testdata/
+coverage.out
+*.test
+
+# Air temporary files
+tmp/
+
+# Docker files (don't copy other Dockerfiles)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Vendor (we use go mod download instead)
+vendor/
+
+# Logs
+*.log
+logs/
+
+# OS files
+Thumbs.db

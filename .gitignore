@@ -1,0 +1,60 @@
+# Go build files
+/bin/
+/pkg/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test files
+*.test
+*.out
+coverage.out
+*.coverprofile
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Go modules
+vendor/
+go.work
+go.work.sum
+
+# Environment files
+.env
+.env.*
+.dev
+.stg
+.prod
+*.local
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Temporary files
+/tmp/
+*.tmp
+*.log
+
+# Air live reload
+tmp/
+.air.toml.local
+
+# Docker
+*.dockerignore.local
+
+# Pre-commit
+.pre-commit-config.yaml.local

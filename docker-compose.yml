@@ -1,0 +1,73 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15
+    container_name: cruxdb
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: crux_user
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: cruxdb
+    volumes:
+      - cruxdb_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crux_user -d cruxdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crux-network
+
+  # Fiber API Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PORT: 3000
+    container_name: crux-api
+    restart: always
+    ports:
+      - "3000:3000"  # Adjust to your Fiber app port
+    environment:
+      # Database connection settings
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: crux_user
+      DB_PASSWORD: devpass
+      DB_NAME: cruxdb
+
+      # Application settings
+      APP_ENV: development
+      APP_PORT: 3000
+
+      # Optional: Add any other env vars your app needs
+      # JWT_SECRET: your-dev-secret
+      # API_TIMEOUT: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Mount source code for live reload during development
+      - .:/app
+      # Exclude vendor and bin directories
+      - /app/vendor
+      - /app/bin
+    networks:
+      - crux-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  crux-network:
+    driver: bridge
+
+volumes:
+  cruxdb_data:
+    name: cruxdb_data
