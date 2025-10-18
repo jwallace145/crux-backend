@@ -46,7 +46,7 @@ coverage.out
 tmp/
 
 # Docker files (don't copy other Dockerfiles)
-Dockerfile*
+Dockerfile.local
 docker-compose*.yml
 .dockerignore
 

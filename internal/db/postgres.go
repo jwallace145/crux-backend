@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -104,7 +105,12 @@ func ConnectDB() {
 
 // buildDSN constructs the PostgreSQL Data Source Name from environment variables.
 // It validates that all required environment variables are set and returns a
-// formatted connection string.
+// formatted connection string with appropriate SSL configuration.
+//
+// SSL Mode Logic:
+//   - If DB_SSLMODE is explicitly set, uses that value
+//   - If connecting to AWS RDS (*.rds.amazonaws.com), defaults to "require"
+//   - Otherwise, defaults to "disable" for local development
 //
 // Returns:
 //   - string: PostgreSQL DSN in the format required by the postgres driver
@@ -114,6 +120,7 @@ func buildDSN() string {
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
+	sslmode := os.Getenv("DB_SSLMODE")
 
 	// Validate required environment variables
 	if host == "" || user == "" || password == "" || dbname == "" || port == "" {
@@ -122,9 +129,30 @@ func buildDSN() string {
 		)
 	}
 
+	// Determine SSL mode if not explicitly set
+	if sslmode == "" {
+		if strings.Contains(host, "rds.amazonaws.com") {
+			sslmode = "require"
+			utils.Logger.Info("AWS RDS detected, enabling SSL",
+				zap.String("host", host),
+				zap.String("sslmode", sslmode),
+			)
+		} else {
+			sslmode = "disable"
+			utils.Logger.Info("Local database detected, SSL disabled",
+				zap.String("host", host),
+				zap.String("sslmode", sslmode),
+			)
+		}
+	} else {
+		utils.Logger.Info("Using explicit SSL mode from environment",
+			zap.String("sslmode", sslmode),
+		)
+	}
+
 	return fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		host, user, password, dbname, port,
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
+		host, user, password, dbname, port, sslmode,
 	)
 }
 

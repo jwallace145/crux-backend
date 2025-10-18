@@ -1,4 +1,4 @@
-# Pre-commit hooks for Go code quality
+# Pre-commit hooks for Go code quality and Terraform
 # Install: pre-commit install
 # Run manually: pre-commit run --all-files
 # Update hooks: pre-commit autoupdate
@@ -46,6 +46,29 @@ repos:
       - id: golangci-lint
         args: [--timeout=5m]
 
+  # Terraform hooks
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      # Format Terraform files
+      - id: terraform_fmt
+        args:
+          - --args=-recursive
+          - --args=-write=true
+
+      # Validate Terraform files
+      - id: terraform_validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --args=-no-color
+
+      # Generate Terraform documentation
+      - id: terraform_docs
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+
   # Additional Go checks
   - repo: local
     hooks:
@@ -63,6 +86,20 @@ repos:
         language: system
         pass_filenames: false
 
+      # Terraform format check (additional check)
+      - id: terraform-fmt-check
+        name: Check Terraform formatting
+        language: system
+        pass_filenames: false
+        files: \.tf$
+        entry: |
+          bash -c '
+            if ! terraform fmt -check -recursive infra/ >/dev/null 2>&1; then
+              echo "Terraform code is not formatted. Run: make tf-fmt"
+              exit 1
+            fi
+          '
+
 # Global settings
 default_language_version:
   python: python3
@@ -74,5 +111,7 @@ exclude: |
     ^vendor/|
     ^bin/|
     ^tmp/|
-    \.pb\.go$
+    \.pb\.go$|
+    ^\.terraform/|
+    \.terraform\.lock\.hcl$
   )

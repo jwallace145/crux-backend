@@ -58,3 +58,32 @@ tmp/
 
 # Pre-commit
 .pre-commit-config.yaml.local
+
+# Terraform files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+!example.tfvars
+!terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+
+# Terraform plan files
+*.tfplan
+*.tfplan.json
+
+# Terraform module cache
+.terraform.d/
+
+# Terraform CLI configuration
+.terraform/

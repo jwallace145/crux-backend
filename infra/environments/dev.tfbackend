@@ -1,0 +1,5 @@
+bucket         = "crux-dev-terraform-state-fae3c4d4"
+key            = "terraform.tfstate"
+region         = "us-east-1"
+encrypt        = true
+dynamodb_table = "crux-dev-terraform-locks"

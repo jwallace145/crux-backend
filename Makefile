@@ -1,3 +1,4 @@
+# ===========================================
 # Makefile for Crux Backend Local Development
 # ===========================================
 
@@ -8,7 +9,14 @@ PROJECT_NAME := crux-backend
 DB_CONTAINER := cruxdb
 DB_USER := crux_user
 DB_NAME := cruxdb
+AWS_REGION := us-east-1
+ECR_REGISTRY := 650503560686.dkr.ecr.us-east-1.amazonaws.com
+ECR_REPOSITORY := crux-api
+DOCKERFILE_DEV := Dockerfile.dev
+ECS_CLUSTER := crux-api-cluster-dev
+ECS_SERVICE := crux-api-service-dev
 GO_FILES := $(shell find . -name '*.go' -not -path "./vendor/*")
+
 
 # Colors for output
 COLOR_RESET := \033[0m
@@ -17,7 +25,7 @@ COLOR_GREEN := \033[32m
 COLOR_YELLOW := \033[33m
 COLOR_RED := \033[31m
 
-.PHONY: help up down restart logs logs-api logs-db status clean build test lint fmt fmt-check vet pre-commit run bootstrap reset db-wait db-shell db-migrate db-reset-force check-deps test-api test-db test-all api-shell test-api test-db test-all api-shell
+.PHONY: help up down restart logs logs-api logs-db status clean build test lint fmt fmt-check tf-fmt tf-fmt-check tf-plan tf-apply vet pre-commit run bootstrap reset db-wait db-shell db-migrate db-reset-force ecr-login ecr-build ecr-push ecr-deploy ecs-deploy ecs-status ecs-logs deploy check-deps test-api test-db test-all api-shell test-api test-db test-all api-shell
 
 # Default target
 .DEFAULT_GOAL := help
@@ -27,43 +35,58 @@ help:
 	@echo "$(COLOR_BOLD)$(PROJECT_NAME) - Available Commands$(COLOR_RESET)"
 	@echo ""
 	@echo "$(COLOR_GREEN)Database:$(COLOR_RESET)"
-	@echo "  make up              - Start PostgreSQL container"
-	@echo "  make down            - Stop PostgreSQL container"
-	@echo "  make restart         - Restart PostgreSQL container"
-	@echo "  make logs            - Show logs from all containers"
-	@echo "  make logs-api        - Show API container logs only"
-	@echo "  make logs-db         - Show database container logs only"
-	@echo "  make status          - Show container status"
-	@echo "  make db-wait         - Wait for database to be ready"
-	@echo "  make db-shell        - Open PostgreSQL shell"
+	@printf "  %-20s - %s\n" "make up" "Start PostgreSQL container"
+	@printf "  %-20s - %s\n" "make down" "Stop PostgreSQL container"
+	@printf "  %-20s - %s\n" "make restart" "Restart PostgreSQL container"
+	@printf "  %-20s - %s\n" "make logs" "Show logs from all containers"
+	@printf "  %-20s - %s\n" "make logs-api" "Show API container logs only"
+	@printf "  %-20s - %s\n" "make logs-db" "Show database container logs only"
+	@printf "  %-20s - %s\n" "make status" "Show container status"
+	@printf "  %-20s - %s\n" "make db-wait" "Wait for database to be ready"
+	@printf "  %-20s - %s\n" "make db-shell" "Open PostgreSQL shell"
 	@echo ""
 	@echo "$(COLOR_GREEN)Application:$(COLOR_RESET)"
-	@echo "  make run             - Run Fiber API (starts DB if needed)"
-	@echo "  make build           - Build the application binary"
-	@echo "  make test            - Run tests"
-	@echo "  make lint            - Run linter (requires golangci-lint)"
-	@echo "  make fmt             - Format Go code"
-	@echo "  make fmt-check       - Check code formatting"
-	@echo "  make vet             - Run go vet"
-	@echo "  make pre-commit      - Run all pre-commit checks"
-	@echo "  make bootstrap       - Initialize database schema"
+	@printf "  %-20s - %s\n" "make run" "Run Fiber API (starts DB if needed)"
+	@printf "  %-20s - %s\n" "make build" "Build the application binary"
+	@printf "  %-20s - %s\n" "make test" "Run tests"
+	@printf "  %-20s - %s\n" "make lint" "Run linter (requires golangci-lint)"
+	@printf "  %-20s - %s\n" "make fmt" "Format Go code"
+	@printf "  %-20s - %s\n" "make fmt-check" "Check code formatting"
+	@printf "  %-20s - %s\n" "make vet" "Run go vet"
+	@printf "  %-20s - %s\n" "make pre-commit" "Run all pre-commit checks"
+	@printf "  %-20s - %s\n" "make bootstrap" "Initialize database schema"
+	@echo ""
+	@echo "$(COLOR_GREEN)Terraform:$(COLOR_RESET)"
+	@printf "  %-20s - %s\n" "make tf-fmt" "Format Terraform code"
+	@printf "  %-20s - %s\n" "make tf-fmt-check" "Check Terraform formatting"
+	@printf "  %-20s - %s\n" "make tf-plan" "Plan the infrastructure changes before applying"
+	@printf "  %-20s - %s\n" "make tf-apply" "Apply the infrastructure changes"
+	@printf "  %-20s - %s\n" "make tf-destroy" "Destroy infrastructure"
+	@printf "  %-20s - %s\n" "make tf-output" "Show Terraform outputs"
 	@echo ""
 	@echo "$(COLOR_GREEN)Database Management:$(COLOR_RESET)"
-	@echo "  make db-migrate      - Run migrations (same as bootstrap)"
-	@echo "  make reset           - Reset database (DESTRUCTIVE - prompts for confirmation)"
-	@echo "  make db-reset-force  - Reset database without confirmation (DANGEROUS)"
+	@printf "  %-20s - %s\n" "make db-migrate" "Run migrations (same as bootstrap)"
+	@printf "  %-20s - %s\n" "make reset" "Reset database (DESTRUCTIVE - prompts for confirmation)"
+	@printf "  %-20s - %s\n" "make db-reset-force" "Reset database without confirmation (DANGEROUS)"
+	@echo ""
+	@echo "$(COLOR_GREEN)ECR Commands:$(COLOR_RESET)"
+	@printf "  %-20s - %s\n" "make ecr-login" "Authenticate with AWS ECR"
+	@printf "  %-20s - %s\n" "make ecr-build" "Build Docker image for ECR"
+	@printf "  %-20s - %s\n" "make ecr-push" "Push Docker image to ECR"
+	@printf "  %-20s - %s\n" "make ecr-deploy" "Full ECR deployment pipeline"
 	@echo ""
 	@echo "$(COLOR_GREEN)Cleanup:$(COLOR_RESET)"
-	@echo "  make clean           - Remove binaries and temporary files"
-	@echo "  make clean-all       - Remove containers, volumes, and binaries"
+	@printf "  %-20s - %s\n" "make clean" "Remove binaries and temporary files"
+	@printf "  %-20s - %s\n" "make clean-all" "Remove containers, volumes, and binaries"
 	@echo ""
 	@echo "$(COLOR_GREEN)Utilities:$(COLOR_RESET)"
-	@echo "  make check-deps      - Check for required dependencies"
+	@printf "  %-20s - %s\n" "make check-deps" "Check for required dependencies"
 	@echo ""
 	@echo "$(COLOR_GREEN)Testing:$(COLOR_RESET)"
-	@echo "  make test-api        - Test API health endpoint"
-	@echo "  make test-db         - Test database connection"
-	@echo "  make test-all        - Test both API and database"
+	@printf "  %-20s - %s\n" "make test-api" "Test API health endpoint"
+	@printf "  %-20s - %s\n" "make test-db" "Test database connection"
+	@printf "  %-20s - %s\n" "make test-all" "Test both API and database"
+	@printf "  %-20s - %s\n" "make api-shell" "Open shell in API container"m
 
 ## check-deps: Verify required tools are installed
 check-deps:
@@ -145,6 +168,111 @@ build: check-deps
 	@go build -o bin/$(PROJECT_NAME) $(APP)
 	@echo "$(COLOR_GREEN)✓ Build complete: bin/$(PROJECT_NAME)$(COLOR_RESET)"
 
+## ecr-login: Authenticate with AWS ECR
+ecr-login:
+	@echo "$(COLOR_BOLD)Authenticating with AWS ECR...$(COLOR_RESET)"
+	@if ! command -v aws >/dev/null 2>&1; then \
+		echo "$(COLOR_RED)Error: AWS CLI is not installed$(COLOR_RESET)"; \
+		echo "Install from: https://aws.amazon.com/cli/"; \
+		exit 1; \
+	fi
+	@aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REGISTRY)
+	@echo "$(COLOR_GREEN)✓ ECR authentication successful$(COLOR_RESET)"
+
+## ecr-build: Build Docker image for ECR (multi-platform for AWS compatibility)
+ecr-build: check-deps
+	@echo "$(COLOR_BOLD)Building Docker image from $(DOCKERFILE_DEV) for linux/amd64...$(COLOR_RESET)"
+	@docker build --platform linux/amd64 -f $(DOCKERFILE_DEV) -t $(ECR_REPOSITORY) .
+	@docker tag $(ECR_REPOSITORY):latest $(ECR_REGISTRY)/$(ECR_REPOSITORY):latest
+	@echo "$(COLOR_GREEN)✓ Docker image built and tagged for AWS (linux/amd64)$(COLOR_RESET)"
+
+## ecr-push: Push Docker image to ECR (includes login and build)
+ecr-push: ecr-login ecr-build
+	@echo "$(COLOR_BOLD)Pushing image to ECR...$(COLOR_RESET)"
+	@docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):latest
+	@echo "$(COLOR_GREEN)✓ Image pushed to ECR: $(ECR_REGISTRY)/$(ECR_REPOSITORY):latest$(COLOR_RESET)"
+
+## ecr-deploy: Full ECR deployment pipeline (login, build, push)
+ecr-deploy: ecr-push
+	@echo "$(COLOR_GREEN)$(COLOR_BOLD)✓ ECR deployment complete!$(COLOR_RESET)"
+
+## ecs-deploy: Force ECS service to deploy new image
+ecs-deploy:
+	@echo "$(COLOR_BOLD)Forcing ECS service deployment...$(COLOR_RESET)"
+	@if ! command -v aws >/dev/null 2>&1; then \
+		echo "$(COLOR_RED)Error: AWS CLI is not installed$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(COLOR_YELLOW)Updating service: $(ECS_SERVICE) in cluster: $(ECS_CLUSTER)$(COLOR_RESET)"
+	@aws ecs update-service \
+		--cluster $(ECS_CLUSTER) \
+		--service $(ECS_SERVICE) \
+		--force-new-deployment \
+		--region $(AWS_REGION) \
+		--no-cli-pager > /dev/null
+	@echo "$(COLOR_GREEN)✓ ECS deployment initiated$(COLOR_RESET)"
+	@echo "$(COLOR_YELLOW)Tip: Run 'make ecs-status' to monitor deployment progress$(COLOR_RESET)"
+
+## ecs-status: Check ECS service deployment status
+ecs-status:
+	@echo "$(COLOR_BOLD)Checking ECS service status...$(COLOR_RESET)"
+	@if ! command -v aws >/dev/null 2>&1; then \
+		echo "$(COLOR_RED)Error: AWS CLI is not installed$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "$(COLOR_BOLD)Service Status:$(COLOR_RESET)"
+	@aws ecs describe-services \
+		--cluster $(ECS_CLUSTER) \
+		--services $(ECS_SERVICE) \
+		--region $(AWS_REGION) \
+		--query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount,Pending:pendingCount}' \
+		--output table
+	@echo ""
+	@echo "$(COLOR_BOLD)Recent Deployments:$(COLOR_RESET)"
+	@aws ecs describe-services \
+		--cluster $(ECS_CLUSTER) \
+		--services $(ECS_SERVICE) \
+		--region $(AWS_REGION) \
+		--query 'services[0].deployments[*].{Status:status,Desired:desiredCount,Running:runningCount,Created:createdAt}' \
+		--output table
+	@echo ""
+	@echo "$(COLOR_BOLD)Task Status:$(COLOR_RESET)"
+	@aws ecs list-tasks \
+		--cluster $(ECS_CLUSTER) \
+		--service-name $(ECS_SERVICE) \
+		--region $(AWS_REGION) \
+		--query 'taskArns[*]' \
+		--output text | xargs -I {} aws ecs describe-tasks \
+		--cluster $(ECS_CLUSTER) \
+		--tasks {} \
+		--region $(AWS_REGION) \
+		--query 'tasks[*].{TaskId:taskArn,Status:lastStatus,Health:healthStatus,Started:startedAt}' \
+		--output table 2>/dev/null || echo "No running tasks"
+
+## ecs-logs: Show recent ECS task logs
+ecs-logs:
+	@echo "$(COLOR_BOLD)Fetching ECS task logs...$(COLOR_RESET)"
+	@if ! command -v aws >/dev/null 2>&1; then \
+		echo "$(COLOR_RED)Error: AWS CLI is not installed$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(COLOR_YELLOW)Log group: /ecs/$(ECS_SERVICE)$(COLOR_RESET)"
+	@aws logs tail /ecs/$(ECS_SERVICE) \
+		--follow \
+		--region $(AWS_REGION) \
+		--format short
+
+## deploy: Complete deployment pipeline (build, push, deploy to ECS)
+deploy: ecr-push ecs-deploy
+	@echo ""
+	@echo "$(COLOR_GREEN)$(COLOR_BOLD)✓ Complete deployment pipeline finished!$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_YELLOW)Next steps:$(COLOR_RESET)"
+	@echo "  1. Run 'make ecs-status' to monitor deployment"
+	@echo "  2. Run 'make ecs-logs' to watch application logs"
+	@echo "  3. Test your API endpoint once deployment completes"
+
 ## test: Run tests
 test: check-deps
 	@echo "$(COLOR_BOLD)Running tests...$(COLOR_RESET)"
@@ -180,6 +308,49 @@ fmt-check:
 		exit 1; \
 	fi
 	@echo "$(COLOR_GREEN)✓ Code is properly formatted$(COLOR_RESET)"
+
+# tf-fmt: Format Terraform IaC
+tf-fmt:
+	@echo "$(COLOR_BOLD)Formatting Terraform code...$(COLOR_RESET)"
+	@if command -v terraform >/dev/null 2>&1; then \
+		terraform fmt -recursive infra/; \
+		echo "$(COLOR_GREEN)✓ Terraform formatting complete$(COLOR_RESET)"; \
+	else \
+		echo "$(COLOR_RED)Error: terraform is not installed$(COLOR_RESET)"; \
+		echo "Install from: https://www.terraform.io/downloads"; \
+		exit 1; \
+	fi
+
+## tf-fmt-check: Check Terraform formatting
+tf-fmt-check:
+	@echo "$(COLOR_BOLD)Checking Terraform code formatting...$(COLOR_RESET)"
+	@if command -v terraform >/dev/null 2>&1; then \
+		if terraform fmt -check -recursive infra/; then \
+			echo "$(COLOR_GREEN)✓ Terraform code is properly formatted$(COLOR_RESET)"; \
+		else \
+			echo "$(COLOR_RED)✗ Terraform code is not formatted. Run 'make tf-fmt'$(COLOR_RESET)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "$(COLOR_RED)Error: terraform is not installed$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+
+## tf-plan: Plan Terraform changes
+tf-plan:
+	@./infra/scripts/deploy.sh plan dev
+
+## tf-apply: Apply Terraform changes
+tf-apply:
+	@./infra/scripts/deploy.sh apply dev
+
+## tf-destroy: Destroy infrastructure
+tf-destroy:
+	@./infra/scripts/deploy.sh destroy dev
+
+## tf-output: Show Terraform outputs
+tf-output:
+	@./infra/scripts/deploy.sh output dev
 
 ## vet: Run go vet
 vet:
