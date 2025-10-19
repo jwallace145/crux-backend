@@ -38,10 +38,13 @@ services:
       DB_USER: crux_user
       DB_PASSWORD: devpass
       DB_NAME: cruxdb
+      ACCESS_TOKEN_SECRET_KEY: test-access-token-secret-key
+      REFRESH_TOKEN_SECRET_KEY: test-refresh-token-secret-key
 
       # Application settings
       APP_ENV: development
       APP_PORT: 3000
+      API_VERSION: 1.0.0
 
       # Optional: Add any other env vars your app needs
       # JWT_SECRET: your-dev-secret

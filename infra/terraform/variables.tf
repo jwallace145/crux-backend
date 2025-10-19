@@ -58,6 +58,7 @@ variable "network" {
 variable "api" {
   description = "Configuration for the Crux API ECS task and container"
   type = object({
+    domain = string
     task = object({
       cpu    = number
       memory = number
@@ -105,12 +106,47 @@ variable "database" {
   description = "The configurations for the CruxBackend PostgreSQL database."
 
   type = object({
-    name                  = string
-    username              = string
-    password              = string
-    instance_class        = string
-    postgres_version      = string
-    allocated_storage     = number
-    max_allocated_storage = number
+    postgres_version = string
+    instance_class   = string
+    name             = string
+    user = object({
+      username = string
+      password = string
+    })
+    storage = object({
+      allocated_storage     = number
+      max_allocated_storage = number
+    })
   })
+}
+
+variable "bastion" {
+  description = "Configuration for the bastion host instance"
+  type = object({
+    enabled                 = bool
+    instance_type           = string
+    allowed_ssh_cidr_blocks = list(string)
+  })
+
+  validation {
+    condition     = contains(["t3.micro", "t3.medium"], var.bastion.instance_type)
+    error_message = "Instance type must be either t3.micro or t3.medium"
+  }
+
+  validation {
+    condition = alltrue([
+      for cidr in var.bastion.allowed_ssh_cidr_blocks : can(cidrhost(cidr, 0))
+    ])
+    error_message = "All CIDR blocks must be valid IPv4 CIDR notation"
+  }
+}
+
+variable "access_token_secret_key" {
+  description = "The secret key used for the API access token."
+  type        = string
+}
+
+variable "refresh_token_secret_key" {
+  description = "The secret key used for the API refresh token."
+  type        = string
 }

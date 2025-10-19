@@ -87,3 +87,8 @@ terraform.rc
 
 # Terraform CLI configuration
 .terraform/
+
+# Claude Code
+CLAUDE.md
+claude.md
+.claude/

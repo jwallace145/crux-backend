@@ -65,6 +65,7 @@ help:
 	@printf "  %-20s - %s\n" "make tf-output" "Show Terraform outputs"
 	@echo ""
 	@echo "$(COLOR_GREEN)Database Management:$(COLOR_RESET)"
+	@printf "  %-20s - %s\n" "make db-shell" "Open PostgreSQL interactive shell"
 	@printf "  %-20s - %s\n" "make db-migrate" "Run migrations (same as bootstrap)"
 	@printf "  %-20s - %s\n" "make reset" "Reset database (DESTRUCTIVE - prompts for confirmation)"
 	@printf "  %-20s - %s\n" "make db-reset-force" "Reset database without confirmation (DANGEROUS)"

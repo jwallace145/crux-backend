@@ -166,6 +166,8 @@ func buildDSN() string {
 //   - Crag: Climbing area/location information
 //   - Wall: Climbing wall within a crag
 //   - Route: Individual climbing routes
+//   - Gym: Climbing gym/facility information
+//   - Climb: User climbing activity logs (indoor and outdoor)
 //
 // Parameters:
 //   - db: GORM database instance
@@ -179,6 +181,8 @@ func migrateModels(db *gorm.DB) error {
 		&models.Crag{},
 		&models.Wall{},
 		&models.Route{},
+		&models.Gym{},
+		&models.Climb{},
 	}
 
 	utils.Logger.Info("Starting model migration", zap.Int("modelCount", len(modelsToMigrate)))

@@ -1,3 +1,8 @@
+locals {
+  container_name = "${var.service_name}-${var.environment}"
+}
+
+
 resource "aws_ecs_cluster" "cluster" {
   name = "${var.service_name}-cluster-${var.environment}"
 
@@ -79,32 +84,6 @@ resource "aws_iam_role" "task_role" {
   }
 }
 
-resource "aws_security_group" "task_security_group" {
-  name        = "${var.service_name}-ecs-task-sg-${var.environment}"
-  description = "Security group for ECS tasks"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description = "Allow HTTP from anywhere"
-    from_port   = var.container_port
-    to_port     = var.container_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.service_name}-ecs-task-${var.environment}"
-  }
-}
-
 resource "aws_ecs_task_definition" "task_definition" {
   family                   = "${var.service_name}-${var.environment}"
   network_mode             = "awsvpc"
@@ -116,7 +95,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 
   container_definitions = jsonencode([
     {
-      name      = "${var.service_name}-${var.environment}"
+      name      = local.container_name
       image     = var.container_image
       essential = true
 
@@ -161,13 +140,21 @@ resource "aws_ecs_service" "service" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
+  enable_execute_command = var.enable_ecs_exec
+
   network_configuration {
     subnets          = var.public_subnet_ids
-    security_groups  = [aws_security_group.task_security_group.id]
-    assign_public_ip = true
+    security_groups  = [var.ecs_tasks_security_group_id]
+    assign_public_ip = true # required for internet connection in public subnet for fargate tasks
   }
 
-  enable_execute_command = var.enable_ecs_exec
+  health_check_grace_period_seconds = 120
+
+  load_balancer {
+    target_group_arn = var.target_group_arn
+    container_name   = local.container_name
+    container_port   = var.container_port
+  }
 
   tags = {
     Name = "${var.service_name}-service-${var.environment}"
@@ -177,17 +164,3 @@ resource "aws_ecs_service" "service" {
     aws_iam_role_policy_attachment.task_execution_policy_attachment
   ]
 }
-
-################################################################################
-# Allow ECS to access RDS
-################################################################################
-
-# resource "aws_security_group_rule" "rds_from_ecs" {
-#   type                     = "ingress"
-#   from_port                = var.db_port
-#   to_port                  = var.db_port
-#   protocol                 = "tcp"
-#   security_group_id        = var.db_security_group_id
-#   source_security_group_id = aws_security_group.ecs_task.id
-#   description              = "Allow ECS tasks to access RDS"
-# }

@@ -91,9 +91,11 @@ ${BOLD}Examples:${NC}
     $0 output dev           # Show dev environment outputs
 
 ${BOLD}Environment Variables:${NC}
-    TF_VAR_database_password    Database master password (required)
-    AWS_PROFILE                 AWS profile to use (optional)
-    AWS_REGION                  AWS region (optional, defaults to tfvars)
+    ACCESS_TOKEN_SECRET_KEY           The secret key used for the API access token (required)
+    REFRESH_TOKEN_SECRET_KEY          The secret key used for the API refresh token (required)
+    DB_PASSWORD                       Database master password (required)
+    AWS_PROFILE                       AWS profile to use (optional)
+    AWS_REGION                        AWS region (optional, defaults to tfvars)
 
 ${BOLD}.env File:${NC}
     The script will automatically load environment variables from:
@@ -217,6 +219,34 @@ check_backend_file() {
         print_info "Will use local state (not recommended for production)"
         return 1
     fi
+}
+
+check_jwt_secrets() {
+    local missing_secrets=()
+
+    # Check for ACCESS_TOKEN_SECRET_KEY (becomes TF_VAR_access_token_secret_key via load_env_file)
+    if [ -z "$TF_VAR_access_token_secret_key" ]; then
+        missing_secrets+=("ACCESS_TOKEN_SECRET_KEY")
+    fi
+
+    # Check for REFRESH_TOKEN_SECRET_KEY (becomes TF_VAR_refresh_token_secret_key via load_env_file)
+    if [ -z "$TF_VAR_refresh_token_secret_key" ]; then
+        missing_secrets+=("REFRESH_TOKEN_SECRET_KEY")
+    fi
+
+    if [ ${#missing_secrets[@]} -ne 0 ]; then
+        print_error "Missing required JWT secret environment variables: ${missing_secrets[*]}"
+        echo ""
+        echo "These variables must be set in your .env file:"
+        for secret in "${missing_secrets[@]}"; do
+            echo "  $secret=<your-secret-value>"
+        done
+        exit 1
+    fi
+
+    print_success "JWT secrets configured"
+    print_info "  ACCESS_TOKEN_SECRET_KEY: ****${TF_VAR_access_token_secret_key: -4}"
+    print_info "  REFRESH_TOKEN_SECRET_KEY: ****${TF_VAR_refresh_token_secret_key: -4}"
 }
 
 check_database_password() {
@@ -425,8 +455,9 @@ main() {
     check_environment_file "$environment"
     check_backend_file "$environment"
 
-    # Only check database password for actions that need it
+    # Only check secrets for actions that need them
     if [ "$action" != "output" ] && [ "$action" != "validate" ]; then
+        check_jwt_secrets
         check_database_password
     fi
 

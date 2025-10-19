@@ -67,6 +67,16 @@ variable "enable_ecs_exec" {
   type        = string
 }
 
+variable "target_group_arn" {
+  description = "The ARN of the target group of the ALB."
+  type        = string
+}
+
+variable "ecs_tasks_security_group_id" {
+  description = "The security group ID for ECS tasks (created by alb-ecs module)."
+  type        = string
+}
+
 variable "enable_container_insights" {
   description = "Enables/disables CloudWatch Container Insights for a specified cluster."
   type        = bool

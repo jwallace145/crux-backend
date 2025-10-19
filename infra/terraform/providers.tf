@@ -21,8 +21,9 @@ provider "aws" {
 
   default_tags {
     tags = {
-      service : var.service_name
-      domain : var.environment
+      Service : var.service_name
+      Environment : var.environment
+      ManagedBy : "Terraform"
     }
   }
 }
