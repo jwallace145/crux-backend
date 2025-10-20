@@ -1,0 +1,803 @@
+openapi: 3.0.3
+info:
+  title: Crux Backend API
+  description: |
+    The Crux Backend API provides comprehensive endpoints for managing climbing activities, user authentication, and user profiles.
+
+    ## Authentication
+    The API uses JWT tokens stored in HTTP-only cookies for authentication:
+    - Access tokens are short-lived (used for API requests)
+    - Refresh tokens are long-lived (used to obtain new access tokens)
+
+    ## Response Format
+    All endpoints return a standardized response structure containing:
+    - Service metadata (service_name, version, environment)
+    - Request tracking (request_id, timestamp)
+    - Status and message
+    - Data payload or error details
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/jwallace145/crux-backend
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server - Use this to test local changes
+  - url: http://dev-api.cruxproject.io
+    description: Development server - Use this to test deployed changes
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Authentication
+    description: User authentication and session management
+  - name: Users
+    description: User management operations
+  - name: Climbs
+    description: Climb logging and retrieval
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the API service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                service_name: crux-backend
+                version: "1.0.0"
+                environment: development
+                api_name: health_check
+                request_id: "123e4567-e89b-12d3-a456-426614174000"
+                timestamp: "2024-01-01T12:00:00Z"
+                status: success
+                message: CruxBackend API is running
+                data:
+                  status: healthy
+                  uptime: "2024-01-01 12:00:00 +0000 UTC"
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: |
+        Authenticate a user with username/email and password.
+
+        Accepts either username OR email (not both) along with password.
+        Returns user data and sets HTTP-only cookies for access and refresh tokens.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              usernameLogin:
+                summary: Login with username
+                value:
+                  username: johndoe
+                  password: securepassword123
+              emailLogin:
+                summary: Login with email
+                value:
+                  email: john@example.com
+                  password: securepassword123
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Sets access_token and refresh_token cookies
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: |
+        Log out the current user by revoking their session and clearing cookies.
+
+        Requires a valid access token in cookies.
+      operationId: logout
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Clears access_token and refresh_token cookies
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LogoutResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: |
+        Generate a new access token using a valid refresh token.
+
+        The refresh token is automatically read from the HTTP-only cookie.
+      operationId: refreshToken
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Token refreshed successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Sets new access_token cookie
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /users:
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      description: |
+        Register a new user account.
+
+        Validates that username and email are unique, and password meets security requirements.
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            example:
+              username: johndoe
+              email: john@example.com
+              password: securepassword123
+              first_name: John
+              last_name: Doe
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags:
+        - Users
+      summary: Get authenticated user
+      description: |
+        Retrieve the profile data for the currently authenticated user.
+
+        Requires a valid access token in cookies.
+      operationId: getUser
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /climbs:
+    post:
+      tags:
+        - Climbs
+      summary: Create a new climb
+      description: |
+        Log a new climbing activity.
+
+        Requires authentication. Optionally link the climb to a route or gym.
+      operationId: createClimb
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClimbRequest'
+            example:
+              climb_type: outdoor
+              climb_date: "2024-01-15T10:30:00Z"
+              grade: "5.11a"
+              style: "redpoint"
+              completed: true
+              attempts: 3
+              falls: 1
+              rating: 4
+              notes: "Great route with challenging crux"
+      responses:
+        '201':
+          description: Climb created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ClimbResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags:
+        - Climbs
+      summary: Get user climbs
+      description: |
+        Retrieve climbing activities for a specific user with optional date range filtering.
+
+        Results are returned in descending order by climb date (most recent first).
+      operationId: getClimbs
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          description: The ID of the user whose climbs to retrieve
+          schema:
+            type: integer
+            format: uint
+            example: 1
+        - name: start_date
+          in: query
+          required: false
+          description: Start date for filtering climbs (RFC3339 format)
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+        - name: end_date
+          in: query
+          required: false
+          description: End date for filtering climbs (RFC3339 format)
+          schema:
+            type: string
+            format: date-time
+            example: "2024-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Climbs retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          climbs:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ClimbResponse'
+                          count:
+                            type: integer
+                            description: Total number of climbs returned
+                          user_id:
+                            type: integer
+                            description: User ID for which climbs were retrieved
+                          start_date:
+                            type: string
+                            format: date-time
+                            description: Start date used for filtering
+                          end_date:
+                            type: string
+                            format: date-time
+                            description: End date used for filtering
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: JWT access token stored in HTTP-only cookie
+
+  schemas:
+    APIResponse:
+      type: object
+      description: Standardized response structure for all API endpoints
+      required:
+        - service_name
+        - version
+        - environment
+        - api_name
+        - request_id
+        - timestamp
+        - status
+      properties:
+        service_name:
+          type: string
+          description: Name of the API service
+          example: crux-backend
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        environment:
+          type: string
+          description: Deployment environment
+          example: development
+          enum:
+            - development
+            - staging
+            - production
+        api_name:
+          type: string
+          description: Name of the API endpoint
+          example: get_user
+        request_id:
+          type: string
+          description: Unique identifier for request tracing
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        timestamp:
+          type: string
+          format: date-time
+          description: Response generation timestamp
+        status:
+          type: string
+          description: Response status
+          enum:
+            - success
+            - error
+        message:
+          type: string
+          description: Human-readable message
+        data:
+          type: object
+          description: Endpoint-specific response data
+        error:
+          $ref: '#/components/schemas/APIError'
+
+    APIError:
+      type: object
+      description: Structured error information
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: INVALID_INPUT
+          enum:
+            - INVALID_INPUT
+            - NOT_FOUND
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - INTERNAL_ERROR
+            - DATABASE_ERROR
+            - VALIDATION_FAILED
+        message:
+          type: string
+          description: Human-readable error message
+          example: Username is required
+        details:
+          type: object
+          description: Additional error context
+
+    LoginRequest:
+      type: object
+      required:
+        - password
+      properties:
+        username:
+          type: string
+          description: Username for login (mutually exclusive with email)
+          example: johndoe
+        email:
+          type: string
+          format: email
+          description: Email for login (mutually exclusive with username)
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          description: User password
+          example: securepassword123
+
+    LoginResponse:
+      type: object
+      required:
+        - user
+        - session_id
+        - expires_at
+        - message
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        session_id:
+          type: string
+          description: Session identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiration time
+        message:
+          type: string
+          example: Login successful
+
+    LogoutResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Logout successful
+
+    RefreshResponse:
+      type: object
+      required:
+        - message
+        - expires_at
+      properties:
+        message:
+          type: string
+          example: Access token refreshed successfully
+        expires_at:
+          type: string
+          format: date-time
+          description: New access token expiration time
+
+    CreateUserRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Unique username
+          example: johndoe
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Unique email address
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          description: User password (8-72 characters)
+          example: securepassword123
+        first_name:
+          type: string
+          maxLength: 100
+          description: User's first name
+          example: John
+        last_name:
+          type: string
+          maxLength: 100
+          description: User's last name
+          example: Doe
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: johndoe
+        email:
+          type: string
+          format: email
+          description: Email address
+          example: john@example.com
+        first_name:
+          type: string
+          description: First name
+          example: John
+        last_name:
+          type: string
+          description: Last name
+          example: Doe
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CreateClimbRequest:
+      type: object
+      required:
+        - climb_type
+        - climb_date
+        - grade
+      properties:
+        climb_type:
+          type: string
+          description: Type of climb
+          enum:
+            - indoor
+            - outdoor
+          example: outdoor
+        climb_date:
+          type: string
+          format: date-time
+          description: Date of the climb (cannot be in the future)
+          example: "2024-01-15T10:30:00Z"
+        grade:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: Climb grade/difficulty
+          example: "5.11a"
+        route_id:
+          type: integer
+          format: uint
+          description: Optional route ID for outdoor climbs
+          example: 123
+        gym_id:
+          type: integer
+          format: uint
+          description: Optional gym ID for indoor climbs
+          example: 45
+        style:
+          type: string
+          maxLength: 50
+          description: Climbing style
+          example: redpoint
+        completed:
+          type: boolean
+          description: Whether the climb was completed
+          default: false
+          example: true
+        attempts:
+          type: integer
+          minimum: 0
+          description: Number of attempts
+          default: 1
+          example: 3
+        falls:
+          type: integer
+          minimum: 0
+          description: Number of falls
+          default: 0
+          example: 1
+        rating:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Personal rating (0-5)
+          example: 4
+        notes:
+          type: string
+          maxLength: 1000
+          description: Personal notes about the climb
+          example: "Great route with challenging crux"
+
+    ClimbResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - climb_type
+        - climb_date
+        - grade
+        - completed
+        - attempts
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: Climb ID
+          example: 1
+        user_id:
+          type: integer
+          format: uint
+          description: User ID who logged the climb
+          example: 1
+        climb_type:
+          type: string
+          description: Type of climb
+          enum:
+            - indoor
+            - outdoor
+          example: outdoor
+        climb_date:
+          type: string
+          format: date-time
+          description: Date of the climb
+        grade:
+          type: string
+          description: Climb grade
+          example: "5.11a"
+        style:
+          type: string
+          description: Climbing style
+          example: redpoint
+        route_id:
+          type: integer
+          format: uint
+          description: Associated route ID
+          example: 123
+        gym_id:
+          type: integer
+          format: uint
+          description: Associated gym ID
+          example: 45
+        completed:
+          type: boolean
+          description: Whether the climb was completed
+          example: true
+        attempts:
+          type: integer
+          description: Number of attempts
+          example: 3
+        falls:
+          type: integer
+          description: Number of falls
+          example: 1
+        rating:
+          type: integer
+          description: Personal rating (0-5)
+          example: 4
+        notes:
+          type: string
+          description: Personal notes
+          example: "Great route with challenging crux"
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input or validation error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  status:
+                    example: error
+                  error:
+                    $ref: '#/components/schemas/APIError'
+
+    Unauthorized:
+      description: Unauthorized - authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  status:
+                    example: error
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        example: UNAUTHORIZED
+                      message:
+                        example: Invalid credentials
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/APIResponse'
+              - type: object
+                properties:
+                  status:
+                    example: error
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        example: INTERNAL_ERROR
+                      message:
+                        example: An unexpected error occurred

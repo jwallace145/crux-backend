@@ -22,6 +22,9 @@ func RequestLogger() fiber.Handler {
 			c.Set("X-Request-ID", requestID)
 		}
 
+		// Store request ID in context for handlers to access
+		c.Locals("request_id", requestID)
+
 		// Log incoming request
 		Logger.Info("Incoming API request",
 			zap.String("request_id", requestID),
@@ -83,7 +86,7 @@ func CORSMiddleware() fiber.Handler {
 		// Allow common development origins
 		// NOTE: Cannot use "*" with AllowCredentials: true due to browser security restrictions
 		// TODO(#1): Lock this down to specific production origins when deploying
-		AllowOrigins: "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8080",
+		AllowOrigins: "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:5173,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8080,https://jwallace145.github.io",
 
 		// Allow credentials (cookies, authorization headers, etc.)
 		// CRITICAL: This is required for JWT cookie-based authentication to work

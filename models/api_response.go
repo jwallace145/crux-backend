@@ -20,6 +20,9 @@ type APIResponse struct {
 	// APIName identifies the specific endpoint (e.g., "get_user", "create_route")
 	APIName string `json:"api_name"`
 
+	// RequestID is the unique identifier for this request, used for tracing in logs
+	RequestID string `json:"request_id"`
+
 	// Timestamp is when the response was generated (RFC3339 format)
 	Timestamp time.Time `json:"timestamp"`
 

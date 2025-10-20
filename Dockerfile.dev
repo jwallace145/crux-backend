@@ -29,10 +29,7 @@ COPY . .
 # Build the application
 # CGO_ENABLED=0 for static binary (better for Alpine)
 # -ldflags="-w -s" strips debug info to reduce binary size
-RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags="-w -s" \
-    -o /app/crux-api \
-    .
+RUN CGO_ENABLED=0 GOOS=linux go build -v -ldflags="-w -s" -o /app/crux-api .
 
 # Runtime stage - minimal image
 FROM alpine:latest

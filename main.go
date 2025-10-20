@@ -48,6 +48,9 @@ func main() {
 	routes.SetupUserRoutes(app)
 	routes.SetupClimbRoutes(app)
 
+	// Setup API documentation routes
+	routes.SetupDocsRoutes(app)
+
 	// Get port from environment variable or default to 3000
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -56,7 +59,10 @@ func main() {
 
 	// CRITICAL: Listen on 0.0.0.0 instead of localhost for ECS compatibility
 	address := "0.0.0.0:" + port
-	utils.Logger.Info("Starting Crux API server", zap.String("address", address))
+	utils.Logger.Info("Starting Crux API server",
+		zap.String("address", address),
+		zap.String("docs", "http://localhost:"+port+"/docs"),
+	)
 
 	if err := app.Listen(address); err != nil {
 		utils.Logger.Fatal("Failed to start server", zap.Error(err))

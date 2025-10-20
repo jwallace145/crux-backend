@@ -193,6 +193,59 @@ curl http://localhost:3000/health
 - `POST /climbs` - Log a climb (outdoor or indoor)
 - `GET /climbs?user_id=X&start_date=Y&end_date=Z` - Get user's climbs
 
+## API Documentation
+
+### Interactive API Documentation with Scalar
+
+CruxBackend provides comprehensive, interactive API documentation powered by [Scalar](https://guides.scalar.com/scalar/introduction), designed for developers who want to explore, test, and integrate with the API.
+
+**Live Documentation:** [https://jwallace145.github.io/crux-backend](https://jwallace145.github.io/crux-backend)
+
+#### Features
+
+The interactive documentation provides:
+- **Live API Testing** - Test all endpoints directly from your browser
+- **Multiple Environments** - Switch between local development (localhost:3000) and deployed servers (dev-api.cruxproject.io)
+- **Request/Response Examples** - View example requests and responses for every endpoint
+- **Schema Documentation** - Detailed documentation of all data models and validation rules
+- **Authentication Flow** - Test the complete authentication workflow with JWT tokens
+- **Search & Browse** - Quickly find endpoints organized by category (Health, Auth, Users, Climbs)
+- **OpenAPI Specification** - Based on OpenAPI 3.0.3 standard for easy integration with other tools
+
+#### Local Development
+
+When running the API locally, the documentation is available at:
+```
+http://localhost:3000/docs
+```
+
+The OpenAPI specification file can be accessed at:
+```
+http://localhost:3000/docs/openapi.yaml
+```
+
+#### Using the Documentation
+
+1. **Select Environment** - Use the server dropdown to choose between local development or deployed servers
+2. **Browse Endpoints** - Navigate through all available API endpoints organized by tags
+3. **Try It Out** - Click "Try It" on any endpoint to send real requests to the selected environment
+4. **Authentication** - Login via `POST /login` to test authenticated endpoints (cookies are handled automatically)
+5. **View Schemas** - Explore detailed request and response schemas with validation rules
+
+**Environment Switching:**
+The documentation supports testing against multiple environments without leaving the page. Simply select your target environment from the server dropdown:
+- **Local Development** (`http://localhost:3000`) - Test changes during local development
+- **Development Server** (`http://dev-api.cruxproject.io`) - Test deployed changes in the dev environment
+
+#### For Developers
+
+The OpenAPI specification can be used with various tools:
+- Import into Postman, Insomnia, or other API clients
+- Generate client SDKs using [OpenAPI Generator](https://openapi-generator.tech/)
+- Integrate with CI/CD pipelines for API contract testing
+
+For more information about Scalar and its features, visit the [Scalar documentation](https://guides.scalar.com/scalar/introduction).
+
 ## Database Schema
 
 ### Core Entities
@@ -335,6 +388,7 @@ go test -race ./...
 - [x] Application Load Balancer
 - [x] RDS PostgreSQL
 - [x] Docker containerization
+- [x] Interactive API documentation (OpenAPI + Scalar)
 
 ### In Progress 🚧
 - [ ] Natural language route search
@@ -348,7 +402,6 @@ go test -race ./...
 - [ ] Photo uploads for climbs and routes
 - [ ] Weather integration for route conditions
 - [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Comprehensive API documentation (Swagger/OpenAPI)
 - [ ] GraphQL endpoint (optional)
 
 ## Contributing
@@ -418,12 +471,16 @@ crux-backend/
 │   ├── services/          # Business logic handlers
 │   │   ├── auth/         # Authentication
 │   │   ├── users/        # User management
-│   │   └── climbs/       # Climb logging
+│   │   ├── climbs/       # Climb logging
+│   │   └── docs/         # API documentation
 │   ├── utils/            # Shared utilities
 │   │   ├── logger.go     # Zap logger
 │   │   ├── jwt.go        # JWT utilities
 │   │   └── response.go   # API response helpers
 │   └── aws/              # AWS service clients
+├── docs/                 # API Documentation
+│   ├── openapi.yaml      # OpenAPI 3.0.3 specification
+│   └── README.md         # Documentation guide
 ├── infra/                # Infrastructure as Code
 │   ├── terraform/        # Terraform modules
 │   │   ├── modules/     # Reusable modules

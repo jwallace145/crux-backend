@@ -42,7 +42,7 @@ api = {
 }
 
 database = {
-  postgres_version = "16.3"
+  postgres_version = "16.8"
   instance_class   = "db.t4g.micro"
 
   name = "cruxdb"

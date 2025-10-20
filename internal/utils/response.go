@@ -58,6 +58,12 @@ func (rb *ResponseBuilder) WithStatus(status string) *ResponseBuilder {
 	return rb
 }
 
+// WithRequestID sets the request_id field of the response
+func (rb *ResponseBuilder) WithRequestID(requestID string) *ResponseBuilder {
+	rb.response.RequestID = requestID
+	return rb
+}
+
 // WithError sets the error field and status to error
 func (rb *ResponseBuilder) WithError(code, message string, details interface{}) *ResponseBuilder {
 	rb.response.Status = models.StatusError
@@ -77,7 +83,12 @@ func (rb *ResponseBuilder) Build() *models.APIResponse {
 // SendJSON sends the response as JSON with the given status code
 // It also logs the response for audit trail purposes
 func (rb *ResponseBuilder) SendJSON(c *fiber.Ctx, statusCode int) error {
-	requestID := c.Get("X-Request-ID", "unknown")
+	// Extract request ID from context and add it to the response
+	requestID, ok := c.Locals("request_id").(string)
+	if !ok || requestID == "" {
+		requestID = c.Get("X-Request-ID", "unknown")
+	}
+	rb.response.RequestID = requestID
 
 	// Log the response before sending
 	if rb.response.Status == models.StatusError {
@@ -175,20 +186,19 @@ func getEnvOrDefault(key, defaultValue string) string {
 // ValidateJSONContentType validates that the request has a JSON content-type header
 // It performs case-insensitive matching on "application/json"
 func ValidateJSONContentType(c *fiber.Ctx, apiName string) error {
+	log := GetLoggerFromContext(c)
 	contentType := c.Get("Content-Type")
 
 	// Log the content-type header for audit purposes
-	Logger.Info("Validating content-type header",
+	log.Info("Validating content-type header",
 		zap.String("api", apiName),
-		zap.String("request_id", c.Get("X-Request-ID", "unknown")),
 		zap.String("content_type", contentType),
 	)
 
 	// Check if content-type is empty
 	if contentType == "" {
-		Logger.Warn("Missing content-type header",
+		log.Warn("Missing content-type header",
 			zap.String("api", apiName),
-			zap.String("request_id", c.Get("X-Request-ID", "unknown")),
 		)
 		return BadRequestResponse(c, apiName, "Content-Type header is required", map[string]string{
 			"required": "application/json",
@@ -214,9 +224,8 @@ func ValidateJSONContentType(c *fiber.Ctx, apiName string) error {
 	contentTypeLower = trimWhitespace(contentTypeLower)
 
 	if contentTypeLower != "application/json" {
-		Logger.Warn("Invalid content-type header",
+		log.Warn("Invalid content-type header",
 			zap.String("api", apiName),
-			zap.String("request_id", c.Get("X-Request-ID", "unknown")),
 			zap.String("content_type", contentType),
 			zap.String("expected", "application/json"),
 		)
@@ -226,9 +235,8 @@ func ValidateJSONContentType(c *fiber.Ctx, apiName string) error {
 		})
 	}
 
-	Logger.Info("Content-type validation passed",
+	log.Info("Content-type validation passed",
 		zap.String("api", apiName),
-		zap.String("request_id", c.Get("X-Request-ID", "unknown")),
 		zap.String("content_type", contentType),
 	)
 

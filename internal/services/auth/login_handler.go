@@ -20,11 +20,10 @@ import (
 // Returns JWT tokens via secure HTTP-only cookies
 func Login(c *fiber.Ctx) error {
 	apiName := "login"
-	requestID := c.Get("X-Request-ID", "unknown")
+	log := utils.GetLoggerFromContext(c)
 
-	utils.Logger.Info("Starting login process",
+	log.Info("Starting login process",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 	)
 
 	// Validate Content-Type header
@@ -35,27 +34,24 @@ func Login(c *fiber.Ctx) error {
 	// Parse request body
 	var req models.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		utils.Logger.Error("Failed to parse request body",
+		log.Error("Failed to parse request body",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.BadRequestResponse(c, apiName, "Invalid request body", err.Error())
 	}
 
-	utils.Logger.Info("Request body parsed successfully",
+	log.Info("Request body parsed successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.String("username", req.Username),
 		zap.String("email", req.Email),
 	)
 
 	// Validate request
 	if err := validateLoginRequest(&req); err != nil {
-		utils.Logger.Warn("Request validation failed",
+		log.Warn("Request validation failed",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.ValidationErrorResponse(c, apiName, err.Error(), nil)
 	}
@@ -69,9 +65,8 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	// Find user by email or username
-	utils.Logger.Info("Looking up user",
+	log.Info("Looking up user",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.String("username", req.Username),
 		zap.String("email", req.Email),
 	)
@@ -87,52 +82,46 @@ func Login(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			utils.Logger.Warn("User not found",
+			log.Warn("User not found",
 				zap.String("api", apiName),
-				zap.String("request_id", requestID),
 				zap.String("username", req.Username),
 				zap.String("email", req.Email),
 			)
 			return utils.UnauthorizedResponse(c, apiName, "Invalid credentials")
 		}
-		utils.Logger.Error("Database error while looking up user",
+		log.Error("Database error while looking up user",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.InternalErrorResponse(c, apiName, "Authentication failed", nil)
 	}
 
-	utils.Logger.Info("User found, verifying password",
+	log.Info("User found, verifying password",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", user.ID),
 		zap.String("username", user.Username),
 	)
 
 	// Verify password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		utils.Logger.Warn("Invalid password",
+		log.Warn("Invalid password",
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("user_id", user.ID),
 			zap.String("username", user.Username),
 		)
 		return utils.UnauthorizedResponse(c, apiName, "Invalid credentials")
 	}
 
-	utils.Logger.Info("Password verified successfully",
+	log.Info("Password verified successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", user.ID),
 	)
 
 	// Generate session ID
 	sessionID := uuid.New().String()
 
-	utils.Logger.Info("Generated session ID",
+	log.Info("Generated session ID",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.String("session_id", sessionID),
 		zap.Uint("user_id", user.ID),
 	)
@@ -150,18 +139,16 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if err := db.DB.Create(session).Error; err != nil {
-		utils.Logger.Error("Failed to create session",
+		log.Error("Failed to create session",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("user_id", user.ID),
 		)
 		return utils.InternalErrorResponse(c, apiName, "Failed to create session", nil)
 	}
 
-	utils.Logger.Info("Session created successfully",
+	log.Info("Session created successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("session_id", session.ID),
 		zap.String("session_uuid", sessionID),
 		zap.Uint("user_id", user.ID),
@@ -170,10 +157,9 @@ func Login(c *fiber.Ctx) error {
 	// Generate JWT tokens
 	accessToken, err := utils.GenerateAccessToken(user.ID, user.Username, user.Email, sessionID)
 	if err != nil {
-		utils.Logger.Error("Failed to generate access token",
+		log.Error("Failed to generate access token",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("user_id", user.ID),
 		)
 		return utils.InternalErrorResponse(c, apiName, "Failed to generate access token", nil)
@@ -181,18 +167,16 @@ func Login(c *fiber.Ctx) error {
 
 	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.Username, user.Email, sessionID)
 	if err != nil {
-		utils.Logger.Error("Failed to generate refresh token",
+		log.Error("Failed to generate refresh token",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("user_id", user.ID),
 		)
 		return utils.InternalErrorResponse(c, apiName, "Failed to generate refresh token", nil)
 	}
 
-	utils.Logger.Info("JWT tokens generated successfully",
+	log.Info("JWT tokens generated successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", user.ID),
 	)
 
@@ -204,8 +188,6 @@ func Login(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   int(utils.AccessTokenExpiry.Seconds()),
 		HTTPOnly: true,
-		Secure:   true, // HTTPS only in production
-		SameSite: "Strict",
 	})
 
 	// Refresh token cookie (long-lived)
@@ -215,13 +197,10 @@ func Login(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   int(utils.RefreshTokenExpiry.Seconds()),
 		HTTPOnly: true,
-		Secure:   true, // HTTPS only in production
-		SameSite: "Strict",
 	})
 
-	utils.Logger.Info("Cookies set successfully",
+	log.Info("Cookies set successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", user.ID),
 	)
 
@@ -233,9 +212,8 @@ func Login(c *fiber.Ctx) error {
 		Message:   "Login successful",
 	}
 
-	utils.Logger.Info("Login completed successfully",
+	log.Info("Login completed successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", user.ID),
 		zap.String("username", user.Username),
 		zap.String("session_id", sessionID),

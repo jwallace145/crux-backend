@@ -16,11 +16,10 @@ import (
 // It validates the request, verifies optional route/gym references, and persists the climb
 func CreateClimb(c *fiber.Ctx) error {
 	apiName := "create_climb"
-	requestID := c.Get("X-Request-ID", "unknown")
+	log := utils.GetLoggerFromContext(c)
 
-	utils.Logger.Info("Starting climb creation process",
+	log.Info("Starting climb creation process",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 	)
 
 	// Validate Content-Type header
@@ -31,131 +30,116 @@ func CreateClimb(c *fiber.Ctx) error {
 	// Parse request body
 	var req models.CreateClimbRequest
 	if err := c.BodyParser(&req); err != nil {
-		utils.Logger.Error("Failed to parse request body",
+		log.Error("Failed to parse request body",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.BadRequestResponse(c, apiName, "Invalid request body", err.Error())
 	}
 
-	utils.Logger.Info("Request body parsed successfully",
+	log.Info("Request body parsed successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.String("climb_type", req.ClimbType),
 		zap.String("grade", req.Grade),
 	)
 
 	// Validate request
 	if err := validateCreateClimbRequest(&req); err != nil {
-		utils.Logger.Warn("Request validation failed",
+		log.Warn("Request validation failed",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.ValidationErrorResponse(c, apiName, err.Error(), nil)
 	}
 
-	utils.Logger.Info("Request validation passed",
+	log.Info("Request validation passed",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 	)
 
 	// Get authenticated user ID from token
 	// For now, we'll extract from access token cookie
 	accessToken := c.Cookies("access_token", "")
 	if accessToken == "" {
-		utils.Logger.Warn("No access token found",
+		log.Warn("No access token found",
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.UnauthorizedResponse(c, apiName, "Authentication required")
 	}
 
 	claims, err := utils.ValidateAccessToken(accessToken)
 	if err != nil {
-		utils.Logger.Warn("Invalid access token",
+		log.Warn("Invalid access token",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 		)
 		return utils.UnauthorizedResponse(c, apiName, "Invalid or expired token")
 	}
 
 	userID := claims.UserID
 
-	utils.Logger.Info("User authenticated",
+	log.Info("User authenticated",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", userID),
 	)
 
 	// Verify route exists if RouteID is provided
 	if req.RouteID != nil {
-		utils.Logger.Info("Verifying route exists",
+		log.Info("Verifying route exists",
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("route_id", *req.RouteID),
 		)
 
 		var route models.Route
 		if err := db.DB.First(&route, *req.RouteID).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				utils.Logger.Warn("Route not found",
+				log.Warn("Route not found",
 					zap.String("api", apiName),
-					zap.String("request_id", requestID),
 					zap.Uint("route_id", *req.RouteID),
 				)
 				return utils.BadRequestResponse(c, apiName, "Route not found", map[string]interface{}{
 					"route_id": *req.RouteID,
 				})
 			}
-			utils.Logger.Error("Database error while checking route",
+			log.Error("Database error while checking route",
 				zap.Error(err),
 				zap.String("api", apiName),
-				zap.String("request_id", requestID),
 			)
 			return utils.InternalErrorResponse(c, apiName, "Failed to verify route", nil)
 		}
 
-		utils.Logger.Info("Route verified",
+		log.Info("Route verified",
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("route_id", *req.RouteID),
 		)
 	}
 
 	// Verify gym exists if GymID is provided
 	if req.GymID != nil {
-		utils.Logger.Info("Verifying gym exists",
+		log.Info("Verifying gym exists",
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("gym_id", *req.GymID),
 		)
 
 		var gym models.Gym
 		if err := db.DB.First(&gym, *req.GymID).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				utils.Logger.Warn("Gym not found",
+				log.Warn("Gym not found",
 					zap.String("api", apiName),
-					zap.String("request_id", requestID),
 					zap.Uint("gym_id", *req.GymID),
 				)
 				return utils.BadRequestResponse(c, apiName, "Gym not found", map[string]interface{}{
 					"gym_id": *req.GymID,
 				})
 			}
-			utils.Logger.Error("Database error while checking gym",
+			log.Error("Database error while checking gym",
 				zap.Error(err),
 				zap.String("api", apiName),
-				zap.String("request_id", requestID),
 			)
 			return utils.InternalErrorResponse(c, apiName, "Failed to verify gym", nil)
 		}
 
-		utils.Logger.Info("Gym verified",
+		log.Info("Gym verified",
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("gym_id", *req.GymID),
 		)
 	}
@@ -166,9 +150,8 @@ func CreateClimb(c *fiber.Ctx) error {
 	}
 
 	// Create climb
-	utils.Logger.Info("Creating climb in database",
+	log.Info("Creating climb in database",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("user_id", userID),
 		zap.String("climb_type", req.ClimbType),
 		zap.String("grade", req.Grade),
@@ -190,18 +173,16 @@ func CreateClimb(c *fiber.Ctx) error {
 	}
 
 	if err := db.DB.Create(climb).Error; err != nil {
-		utils.Logger.Error("Failed to create climb in database",
+		log.Error("Failed to create climb in database",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.String("request_id", requestID),
 			zap.Uint("user_id", userID),
 		)
 		return utils.InternalErrorResponse(c, apiName, "Failed to create climb", nil)
 	}
 
-	utils.Logger.Info("Climb created successfully in database",
+	log.Info("Climb created successfully in database",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("climb_id", climb.ID),
 		zap.Uint("user_id", userID),
 		zap.Time("climb_date", climb.ClimbDate),
@@ -210,9 +191,8 @@ func CreateClimb(c *fiber.Ctx) error {
 	// Prepare response
 	response := climb.ToClimbResponse()
 
-	utils.Logger.Info("Climb creation completed successfully",
+	log.Info("Climb creation completed successfully",
 		zap.String("api", apiName),
-		zap.String("request_id", requestID),
 		zap.Uint("climb_id", climb.ID),
 		zap.Uint("user_id", userID),
 	)
