@@ -2,6 +2,23 @@ locals {
   api_name = "${var.service_name}-api"
 }
 
+# ============================================================================
+# ACM Certificate for HTTPS
+# ============================================================================
+
+module "certificate" {
+  source = "./modules/acm-certificate"
+
+  service_name = local.api_name
+  environment  = var.environment
+  domain_name  = var.api.domain
+  use_wildcard = true
+}
+
+# ============================================================================
+# Application Load Balancer with HTTPS
+# ============================================================================
+
 module "alb" {
   source = "./modules/alb-ecs"
 
@@ -12,6 +29,11 @@ module "alb" {
   public_subnet_ids = module.network.public_subnet_ids
   container_port    = var.api.container.port
   health_check_path = "/health"
+
+  # HTTPS Configuration
+  enable_https           = true
+  certificate_arn        = module.certificate.certificate_arn
+  redirect_http_to_https = true
 }
 
 module "api" {
