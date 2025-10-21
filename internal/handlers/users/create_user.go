@@ -8,6 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
+	"github.com/jwallace145/crux-backend/internal/handlers"
+
 	"github.com/jwallace145/crux-backend/internal/db"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
@@ -15,7 +17,7 @@ import (
 
 // CreateUser handles POST /users requests to create a new user
 // It validates the request, checks for existing users with the same email/username,
-// and persists the new user to the database
+// and persists the new user to the db
 func CreateUser(c *fiber.Ctx) error {
 	apiName := "create_user"
 	log := utils.GetLoggerFromContext(c)
@@ -25,7 +27,7 @@ func CreateUser(c *fiber.Ctx) error {
 	)
 
 	// Validate Content-Type header
-	if err := utils.ValidateJSONContentType(c, apiName); err != nil {
+	if err := handlers.ValidateJSONContentType(c, apiName); err != nil {
 		// Error response is already sent by ValidateJSONContentType
 		return err
 	}
@@ -38,7 +40,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.ByteString("raw_body", c.Body()),
 		)
-		return utils.BadRequestResponse(c, apiName, "Invalid request body", err.Error())
+		return handlers.BadRequestResponse(c, apiName, "Invalid request body", err.Error())
 	}
 
 	log.Info("Request body parsed successfully",
@@ -61,7 +63,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("username", req.Username),
 			zap.String("email", req.Email),
 		)
-		return utils.ValidationErrorResponse(c, apiName, err.Error(), nil)
+		return handlers.ValidationErrorResponse(c, apiName, err.Error(), nil)
 	}
 
 	log.Info("Request validation passed",
@@ -95,7 +97,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("email", req.Email),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to check for existing user", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to check for existing user", nil)
 	}
 
 	if existingUser != nil {
@@ -104,7 +106,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("email", req.Email),
 			zap.Uint("existing_user_id", existingUser.ID),
 		)
-		return utils.BadRequestResponse(c, apiName, "User with this email already exists", map[string]string{
+		return handlers.BadRequestResponse(c, apiName, "User with this email already exists", map[string]string{
 			"field": "email",
 			"value": req.Email,
 		})
@@ -128,7 +130,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("username", req.Username),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to check for existing username", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to check for existing username", nil)
 	}
 
 	if existingUsername != nil {
@@ -137,7 +139,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("username", req.Username),
 			zap.Uint("existing_user_id", existingUsername.ID),
 		)
-		return utils.BadRequestResponse(c, apiName, "User with this username already exists", map[string]string{
+		return handlers.BadRequestResponse(c, apiName, "User with this username already exists", map[string]string{
 			"field": "username",
 			"value": req.Username,
 		})
@@ -161,7 +163,7 @@ func CreateUser(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("username", req.Username),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to process password", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to process password", nil)
 	}
 
 	log.Info("Password hashed successfully",
@@ -170,7 +172,7 @@ func CreateUser(c *fiber.Ctx) error {
 	)
 
 	// Create new user
-	log.Info("Creating new user in database",
+	log.Info("Creating new user in db",
 		zap.String("api", apiName),
 		zap.String("username", req.Username),
 		zap.String("email", req.Email),
@@ -187,16 +189,16 @@ func CreateUser(c *fiber.Ctx) error {
 	}
 
 	if err := db.DB.Create(user).Error; err != nil {
-		log.Error("Failed to create user in database",
+		log.Error("Failed to create user in db",
 			zap.Error(err),
 			zap.String("api", apiName),
 			zap.String("email", req.Email),
 			zap.String("username", req.Username),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to create user", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to create user", nil)
 	}
 
-	log.Info("User created successfully in database",
+	log.Info("User created successfully in db",
 		zap.String("api", apiName),
 		zap.Uint("user_id", user.ID),
 		zap.String("email", user.Email),
@@ -216,7 +218,7 @@ func CreateUser(c *fiber.Ctx) error {
 	)
 
 	// Return created user
-	return utils.CreatedResponse(c, apiName, response, "User created successfully")
+	return handlers.CreatedResponse(c, apiName, response, "User created successfully")
 }
 
 // validateCreateUserRequest validates the create user request

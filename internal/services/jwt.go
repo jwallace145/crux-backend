@@ -1,4 +1,4 @@
-package utils
+package services
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
+
+	"github.com/jwallace145/crux-backend/internal/utils"
 )
 
 var (
@@ -25,7 +27,7 @@ var (
 func getRequiredEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		Logger.Fatal("Required environment variable not set",
+		utils.Log.Fatal("Required environment variable not set",
 			zap.String("variable", key),
 			zap.String("error", "environment variable is required for security"),
 		)

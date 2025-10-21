@@ -250,7 +250,7 @@ check_jwt_secrets() {
 }
 
 check_database_password() {
-    # Check if database password was loaded from .env file first
+    # Check if db password was loaded from .env file first
     if [ -n "$TF_VAR_db_password" ]; then
         print_success "Database password loaded from .env file"
         # Also set the legacy variable name for backward compatibility

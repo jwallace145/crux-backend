@@ -40,7 +40,7 @@ module "jwt_secrets" {
 module "database_credentials" {
   source = "./modules/secrets-manager-secret"
 
-  secret_name        = "crux-api/database-credentials"
+  secret_name        = "crux-api/db-credentials"
   secret_description = "Database credentials for Crux API"
 
   secrets = {

@@ -97,7 +97,7 @@ check-deps:
 	@command -v go >/dev/null 2>&1 || { echo "$(COLOR_RED)Error: go is not installed$(COLOR_RESET)"; exit 1; }
 	@echo "$(COLOR_GREEN)✓ All dependencies found$(COLOR_RESET)"
 
-## up: Start all containers (database and API)
+## up: Start all containers (db and API)
 up: check-deps
 	@echo "$(COLOR_BOLD)Starting all containers...$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) up -d --build
@@ -116,7 +116,7 @@ restart:
 	@$(MAKE) down
 	@$(MAKE) up
 
-## logs: Show container logs (both API and database)
+## logs: Show container logs (both API and db)
 logs:
 	@docker-compose -f $(COMPOSE_FILE) logs -f
 
@@ -125,7 +125,7 @@ logs-api:
 	@echo "$(COLOR_BOLD)Showing API logs...$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) logs -f api
 
-## logs-db: Show database container logs only
+## logs-db: Show db container logs only
 logs-db:
 	@echo "$(COLOR_BOLD)Showing database logs...$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) logs -f db
@@ -135,7 +135,7 @@ status:
 	@echo "$(COLOR_BOLD)Container Status:$(COLOR_RESET)"
 	@docker-compose -f $(COMPOSE_FILE) ps
 
-## db-wait: Wait for database to be ready
+## db-wait: Wait for db to be ready
 db-wait:
 	@echo "$(COLOR_BOLD)Waiting for database to be ready...$(COLOR_RESET)"
 	@timeout=60; \
@@ -363,12 +363,12 @@ vet:
 pre-commit: fmt-check vet lint test
 	@echo "$(COLOR_GREEN)$(COLOR_BOLD)✓ All pre-commit checks passed!$(COLOR_RESET)"
 
-## run: Run Fiber API (ensures database is running)
+## run: Run Fiber API (ensures db is running)
 run: up
 	@echo "$(COLOR_BOLD)Starting Fiber API...$(COLOR_RESET)"
 	@go run $(APP)
 
-## bootstrap: Initialize database schema
+## bootstrap: Initialize db schema
 bootstrap: up db-wait
 	@echo "$(COLOR_BOLD)Bootstrapping database schema...$(COLOR_RESET)"
 	@go run $(APP) &
@@ -379,13 +379,13 @@ bootstrap: up db-wait
 ## db-migrate: Run migrations (alias for bootstrap)
 db-migrate: bootstrap
 
-## reset: Reset database with confirmation (DESTRUCTIVE)
+## reset: Reset db with confirmation (DESTRUCTIVE)
 reset:
 	@echo "$(COLOR_RED)$(COLOR_BOLD)WARNING: This will DELETE ALL DATA in the database!$(COLOR_RESET)"
 	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 	@$(MAKE) db-reset-force
 
-## db-reset-force: Reset database without confirmation (DANGEROUS)
+## db-reset-force: Reset db without confirmation (DANGEROUS)
 db-reset-force: up db-wait
 	@echo "$(COLOR_BOLD)Resetting database...$(COLOR_RESET)"
 	@docker exec -it $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
@@ -421,7 +421,7 @@ test-api:
 		exit 1; \
 	fi
 
-## test-db: Test database connection
+## test-db: Test db connection
 test-db:
 	@echo "$(COLOR_BOLD)Testing database connection...$(COLOR_RESET)"
 	@if docker exec $(DB_CONTAINER) pg_isready -U $(DB_USER) -d $(DB_NAME) > /dev/null 2>&1; then \
@@ -438,7 +438,7 @@ test-db:
 		exit 1; \
 	fi
 
-## test-all: Test both API and database
+## test-all: Test both API and db
 test-all:
 	@echo "$(COLOR_BOLD)=== Running All Tests ===$(COLOR_RESET)"
 	@echo ""

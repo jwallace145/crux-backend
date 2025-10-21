@@ -6,6 +6,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 
+	"github.com/jwallace145/crux-backend/internal/handlers"
+
 	"github.com/jwallace145/crux-backend/internal/utils"
 )
 
@@ -27,7 +29,7 @@ func ServeOpenAPISpec(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("path", specPath),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to load API specification", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to load API specification", nil)
 	}
 
 	// Set appropriate content type for YAML

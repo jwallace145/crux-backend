@@ -7,6 +7,9 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/jwallace145/crux-backend/internal/handlers"
+	"github.com/jwallace145/crux-backend/internal/services"
+
 	"github.com/jwallace145/crux-backend/internal/db"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
@@ -28,7 +31,7 @@ func Refresh(c *fiber.Ctx) error {
 		log.Warn("No refresh token found in cookies",
 			zap.String("api", apiName),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "No refresh token provided")
+		return handlers.UnauthorizedResponse(c, apiName, "No refresh token provided")
 	}
 
 	log.Info("Refresh token found, validating",
@@ -36,13 +39,13 @@ func Refresh(c *fiber.Ctx) error {
 	)
 
 	// Validate refresh token
-	claims, err := utils.ValidateRefreshToken(refreshToken)
+	claims, err := services.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		log.Warn("Invalid refresh token",
 			zap.Error(err),
 			zap.String("api", apiName),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Invalid or expired refresh token")
+		return handlers.UnauthorizedResponse(c, apiName, "Invalid or expired refresh token")
 	}
 
 	log.Info("Refresh token validated successfully",
@@ -59,14 +62,14 @@ func Refresh(c *fiber.Ctx) error {
 				zap.String("api", apiName),
 				zap.String("session_id", claims.SessionID),
 			)
-			return utils.UnauthorizedResponse(c, apiName, "Session not found")
+			return handlers.UnauthorizedResponse(c, apiName, "Session not found")
 		}
 		log.Error("Database error while checking session",
 			zap.Error(err),
 			zap.String("api", apiName),
 			zap.String("session_id", claims.SessionID),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to validate session", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to validate session", nil)
 	}
 
 	// Check if session is revoked
@@ -75,7 +78,7 @@ func Refresh(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("session_id", claims.SessionID),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Session has been revoked")
+		return handlers.UnauthorizedResponse(c, apiName, "Session has been revoked")
 	}
 
 	// Check if session has expired
@@ -85,7 +88,7 @@ func Refresh(c *fiber.Ctx) error {
 			zap.String("session_id", claims.SessionID),
 			zap.Time("expires_at", session.ExpiresAt),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Session has expired")
+		return handlers.UnauthorizedResponse(c, apiName, "Session has expired")
 	}
 
 	log.Info("Session is valid and active",
@@ -101,7 +104,7 @@ func Refresh(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.Uint("user_id", claims.UserID),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to find user", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to find user", nil)
 	}
 
 	log.Info("User found, generating new access token",
@@ -111,14 +114,14 @@ func Refresh(c *fiber.Ctx) error {
 	)
 
 	// Generate new access token
-	newAccessToken, err := utils.GenerateAccessToken(user.ID, user.Username, user.Email, claims.SessionID)
+	newAccessToken, err := services.GenerateAccessToken(user.ID, user.Username, user.Email, claims.SessionID)
 	if err != nil {
 		log.Error("Failed to generate new access token",
 			zap.Error(err),
 			zap.String("api", apiName),
 			zap.Uint("user_id", user.ID),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to generate access token", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to generate access token", nil)
 	}
 
 	log.Info("New access token generated successfully",
@@ -131,7 +134,7 @@ func Refresh(c *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    newAccessToken,
 		Path:     "/",
-		MaxAge:   int(utils.AccessTokenExpiry.Seconds()),
+		MaxAge:   int(services.AccessTokenExpiry.Seconds()),
 		HTTPOnly: true,
 	})
 
@@ -143,7 +146,7 @@ func Refresh(c *fiber.Ctx) error {
 	// Prepare response
 	response := &models.RefreshResponse{
 		Message:   "Access token refreshed successfully",
-		ExpiresAt: time.Now().Add(utils.AccessTokenExpiry).Format(time.RFC3339),
+		ExpiresAt: time.Now().Add(services.AccessTokenExpiry).Format(time.RFC3339),
 	}
 
 	log.Info("Token refresh completed successfully",
@@ -152,5 +155,5 @@ func Refresh(c *fiber.Ctx) error {
 		zap.String("session_id", claims.SessionID),
 	)
 
-	return utils.SuccessResponse(c, apiName, response, "Access token refreshed successfully")
+	return handlers.SuccessResponse(c, apiName, response, "Access token refreshed successfully")
 }

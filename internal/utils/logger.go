@@ -5,11 +5,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var Logger *zap.Logger
+var Log *zap.Logger
 
 func init() {
 	var err error
-	Logger, err = zap.NewProduction()
+	Log, err = zap.NewProduction()
 	if err != nil {
 		panic("Failed to initialize logger: " + err.Error())
 	}
@@ -17,7 +17,7 @@ func init() {
 
 // Sync flushes any buffered log entries (call this on shutdown)
 func Sync() {
-	_ = Logger.Sync()
+	_ = Log.Sync()
 }
 
 // GetLoggerFromContext returns a logger with the request ID from the Fiber context
@@ -28,5 +28,5 @@ func GetLoggerFromContext(c *fiber.Ctx) *zap.Logger {
 	if !ok || requestID == "" {
 		requestID = "unknown"
 	}
-	return Logger.With(zap.String("request_id", requestID))
+	return Log.With(zap.String("request_id", requestID))
 }

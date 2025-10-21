@@ -1,4 +1,4 @@
-# Primary database endpoint (hostname:port)
+# Primary db endpoint (hostname:port)
 output "endpoint" {
   description = "The connection endpoint for the RDS instance (hostname:port)"
   value       = aws_db_instance.this.endpoint

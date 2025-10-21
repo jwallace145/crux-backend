@@ -6,6 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 
+	"github.com/jwallace145/crux-backend/internal/handlers"
+	"github.com/jwallace145/crux-backend/internal/services"
+
 	"github.com/jwallace145/crux-backend/internal/db"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
@@ -26,7 +29,7 @@ func Logout(c *fiber.Ctx) error {
 
 	if accessToken != "" {
 		// Validate the access token to get session ID
-		claims, err := utils.ValidateAccessToken(accessToken)
+		claims, err := services.ValidateAccessToken(accessToken)
 		if err == nil {
 			log.Info("Access token validated, revoking session",
 				zap.String("api", apiName),
@@ -34,7 +37,7 @@ func Logout(c *fiber.Ctx) error {
 				zap.Uint("user_id", claims.UserID),
 			)
 
-			// Revoke the session in database
+			// Revoke the session in db
 			if err := db.DB.Model(&models.Session{}).
 				Where("session_id = ?", claims.SessionID).
 				Update("revoked", true).Error; err != nil {
@@ -95,5 +98,5 @@ func Logout(c *fiber.Ctx) error {
 		zap.String("api", apiName),
 	)
 
-	return utils.SuccessResponse(c, apiName, response, "Logout successful")
+	return handlers.SuccessResponse(c, apiName, response, "Logout successful")
 }

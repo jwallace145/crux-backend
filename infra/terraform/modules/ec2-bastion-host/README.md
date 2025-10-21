@@ -355,7 +355,7 @@ Use the bastion for SSH tunneling to access private resources:
 ssh -i ~/.ssh/key.pem -L 5432:rds-endpoint.amazonaws.com:5432 ec2-user@<bastion-ip>
 
 # Now connect to localhost
-psql -h localhost -U username -d database
+psql -h localhost -U username -d db
 ```
 
 ### SOCKS Proxy

@@ -1,3 +1,14 @@
+module "db_secrets" {
+  source = "./modules/secrets-manager-secret"
+
+  secret_name = "${var.service_name}-api-${var.environment}/db-user-secrets"
+
+  secrets = {
+    DB_USER     = var.db_user
+    DB_PASSWORD = var.db_password
+  }
+}
+
 module "jwt_secrets" {
   source = "./modules/secrets-manager-secret"
 

@@ -1,4 +1,4 @@
-package utils
+package handlers
 
 import (
 	"os"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+
+	"github.com/jwallace145/crux-backend/internal/utils"
 
 	"github.com/jwallace145/crux-backend/models"
 )
@@ -83,6 +85,8 @@ func (rb *ResponseBuilder) Build() *models.APIResponse {
 // SendJSON sends the response as JSON with the given status code
 // It also logs the response for audit trail purposes
 func (rb *ResponseBuilder) SendJSON(c *fiber.Ctx, statusCode int) error {
+	log := utils.GetLoggerFromContext(c)
+
 	// Extract request ID from context and add it to the response
 	requestID, ok := c.Locals("request_id").(string)
 	if !ok || requestID == "" {
@@ -93,26 +97,23 @@ func (rb *ResponseBuilder) SendJSON(c *fiber.Ctx, statusCode int) error {
 	// Log the response before sending
 	if rb.response.Status == models.StatusError {
 		if statusCode >= 500 {
-			Logger.Error("API response error",
+			log.Error("API response error",
 				zap.String("api", rb.response.APIName),
-				zap.String("request_id", requestID),
 				zap.Int("status_code", statusCode),
 				zap.String("error_code", rb.response.Error.Code),
 				zap.String("error_message", rb.response.Error.Message),
 			)
 		} else {
-			Logger.Warn("API response warning",
+			log.Warn("API response warning",
 				zap.String("api", rb.response.APIName),
-				zap.String("request_id", requestID),
 				zap.Int("status_code", statusCode),
 				zap.String("error_code", rb.response.Error.Code),
 				zap.String("error_message", rb.response.Error.Message),
 			)
 		}
 	} else {
-		Logger.Info("API response success",
+		log.Info("API response success",
 			zap.String("api", rb.response.APIName),
-			zap.String("request_id", requestID),
 			zap.Int("status_code", statusCode),
 		)
 	}
@@ -186,7 +187,7 @@ func getEnvOrDefault(key, defaultValue string) string {
 // ValidateJSONContentType validates that the request has a JSON content-type header
 // It performs case-insensitive matching on "application/json"
 func ValidateJSONContentType(c *fiber.Ctx, apiName string) error {
-	log := GetLoggerFromContext(c)
+	log := utils.GetLoggerFromContext(c)
 	contentType := c.Get("Content-Type")
 
 	// Log the content-type header for audit purposes

@@ -7,6 +7,9 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/jwallace145/crux-backend/internal/handlers"
+	"github.com/jwallace145/crux-backend/internal/services"
+
 	"github.com/jwallace145/crux-backend/internal/db"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
@@ -29,7 +32,7 @@ func GetUser(c *fiber.Ctx) error {
 		log.Warn("Missing access token cookie",
 			zap.String("api", apiName),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Not authenticated")
+		return handlers.UnauthorizedResponse(c, apiName, "Not authenticated")
 	}
 
 	log.Info("Access token found in cookie",
@@ -37,13 +40,13 @@ func GetUser(c *fiber.Ctx) error {
 	)
 
 	// Validate access token
-	claims, err := utils.ValidateAccessToken(accessToken)
+	claims, err := services.ValidateAccessToken(accessToken)
 	if err != nil {
 		log.Warn("Invalid access token",
 			zap.Error(err),
 			zap.String("api", apiName),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Invalid or expired token")
+		return handlers.UnauthorizedResponse(c, apiName, "Invalid or expired token")
 	}
 
 	log.Info("Access token validated successfully",
@@ -60,14 +63,14 @@ func GetUser(c *fiber.Ctx) error {
 				zap.String("api", apiName),
 				zap.String("session_id", claims.SessionID),
 			)
-			return utils.UnauthorizedResponse(c, apiName, "Session not found")
+			return handlers.UnauthorizedResponse(c, apiName, "Session not found")
 		}
 		log.Error("Database error while looking up session",
 			zap.Error(err),
 			zap.String("api", apiName),
 			zap.String("session_id", claims.SessionID),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to validate session", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to validate session", nil)
 	}
 
 	log.Info("Session found",
@@ -82,7 +85,7 @@ func GetUser(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("session_id", claims.SessionID),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Session has been revoked")
+		return handlers.UnauthorizedResponse(c, apiName, "Session has been revoked")
 	}
 
 	// Check if session is expired
@@ -92,7 +95,7 @@ func GetUser(c *fiber.Ctx) error {
 			zap.String("session_id", claims.SessionID),
 			zap.Time("expires_at", session.ExpiresAt),
 		)
-		return utils.UnauthorizedResponse(c, apiName, "Session has expired")
+		return handlers.UnauthorizedResponse(c, apiName, "Session has expired")
 	}
 
 	log.Info("Session is valid",
@@ -100,7 +103,7 @@ func GetUser(c *fiber.Ctx) error {
 		zap.String("session_id", claims.SessionID),
 	)
 
-	// Fetch user from database
+	// Fetch user from db
 	var user models.User
 	if err := db.DB.Where("id = ?", claims.UserID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -108,14 +111,14 @@ func GetUser(c *fiber.Ctx) error {
 				zap.String("api", apiName),
 				zap.Uint("user_id", claims.UserID),
 			)
-			return utils.UnauthorizedResponse(c, apiName, "User not found")
+			return handlers.UnauthorizedResponse(c, apiName, "User not found")
 		}
 		log.Error("Database error while looking up user",
 			zap.Error(err),
 			zap.String("api", apiName),
 			zap.Uint("user_id", claims.UserID),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to fetch user", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to fetch user", nil)
 	}
 
 	log.Info("User fetched successfully",
@@ -133,5 +136,5 @@ func GetUser(c *fiber.Ctx) error {
 		zap.String("username", user.Username),
 	)
 
-	return utils.SuccessResponse(c, apiName, response, "User retrieved successfully")
+	return handlers.SuccessResponse(c, apiName, response, "User retrieved successfully")
 }

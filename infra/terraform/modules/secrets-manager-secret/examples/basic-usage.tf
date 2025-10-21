@@ -26,7 +26,7 @@ module "jwt_secrets" {
   }
 }
 
-# Store database credentials as a single JSON object
+# Store db credentials as a single JSON object
 module "database_secrets" {
   source = "../"
 

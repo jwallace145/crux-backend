@@ -166,7 +166,7 @@ make pre-commit
 # Database management
 make db-shell      # Open PostgreSQL shell
 make bootstrap     # Run migrations
-make reset         # Reset database (prompts for confirmation)
+make reset         # Reset db (prompts for confirmation)
 
 # View all available commands
 make help
@@ -435,11 +435,11 @@ kill -9 <PID>
 
 **Database connection errors:**
 ```bash
-# Check if database is running
+# Check if db is running
 make status
-# View database logs
+# View db logs
 make logs-db
-# Reset database
+# Reset db
 make reset
 ```
 

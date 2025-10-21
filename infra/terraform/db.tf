@@ -18,8 +18,8 @@ module "db" {
   subnet_ids = module.network.public_subnet_ids
 
   # Database user details
-  db_username = var.database.user.username
-  db_password = var.database.user.password
+  db_username = var.db_user
+  db_password = var.db_password
 
   # Storage configs
   allocated_storage     = var.database.storage.allocated_storage

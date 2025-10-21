@@ -7,6 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 
+	"github.com/jwallace145/crux-backend/internal/handlers"
+
 	"github.com/jwallace145/crux-backend/internal/db"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
@@ -34,7 +36,7 @@ func GetClimbs(c *fiber.Ctx) error {
 		log.Warn("Missing user_id query parameter",
 			zap.String("api", apiName),
 		)
-		return utils.BadRequestResponse(c, apiName, "user_id query parameter is required", nil)
+		return handlers.BadRequestResponse(c, apiName, "user_id query parameter is required", nil)
 	}
 
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
@@ -44,7 +46,7 @@ func GetClimbs(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.String("user_id", userIDStr),
 		)
-		return utils.BadRequestResponse(c, apiName, "user_id must be a valid number", nil)
+		return handlers.BadRequestResponse(c, apiName, "user_id must be a valid number", nil)
 	}
 
 	log.Info("User ID parsed from query parameter",
@@ -71,7 +73,7 @@ func GetClimbs(c *fiber.Ctx) error {
 				zap.String("api", apiName),
 				zap.String("start_date", startDateStr),
 			)
-			return utils.BadRequestResponse(c, apiName, "start_date must be in RFC3339 format (e.g., 2024-01-01T00:00:00Z)", nil)
+			return handlers.BadRequestResponse(c, apiName, "start_date must be in RFC3339 format (e.g., 2024-01-01T00:00:00Z)", nil)
 		}
 		startDate = parsedStartDate.UTC()
 		log.Info("Start date parsed",
@@ -94,7 +96,7 @@ func GetClimbs(c *fiber.Ctx) error {
 				zap.String("api", apiName),
 				zap.String("end_date", endDateStr),
 			)
-			return utils.BadRequestResponse(c, apiName, "end_date must be in RFC3339 format (e.g., 2024-12-31T23:59:59Z)", nil)
+			return handlers.BadRequestResponse(c, apiName, "end_date must be in RFC3339 format (e.g., 2024-12-31T23:59:59Z)", nil)
 		}
 		endDate = parsedEndDate.UTC()
 		log.Info("End date parsed",
@@ -115,11 +117,11 @@ func GetClimbs(c *fiber.Ctx) error {
 			zap.Time("start_date", startDate),
 			zap.Time("end_date", endDate),
 		)
-		return utils.BadRequestResponse(c, apiName, "start_date must be before or equal to end_date", nil)
+		return handlers.BadRequestResponse(c, apiName, "start_date must be before or equal to end_date", nil)
 	}
 
-	// Query climbs from database
-	log.Info("Querying climbs from database",
+	// Query climbs from db
+	log.Info("Querying climbs from db",
 		zap.String("api", apiName),
 		zap.Uint64("user_id", userID),
 		zap.Time("start_date", startDate),
@@ -137,7 +139,7 @@ func GetClimbs(c *fiber.Ctx) error {
 			zap.String("api", apiName),
 			zap.Uint64("user_id", userID),
 		)
-		return utils.InternalErrorResponse(c, apiName, "Failed to retrieve climbs", nil)
+		return handlers.InternalErrorResponse(c, apiName, "Failed to retrieve climbs", nil)
 	}
 
 	log.Info("Climbs retrieved successfully",
@@ -167,5 +169,5 @@ func GetClimbs(c *fiber.Ctx) error {
 		zap.Int("count", len(climbs)),
 	)
 
-	return utils.SuccessResponse(c, apiName, responseData, "Climbs retrieved successfully")
+	return handlers.SuccessResponse(c, apiName, responseData, "Climbs retrieved successfully")
 }

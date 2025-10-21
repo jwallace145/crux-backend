@@ -26,7 +26,7 @@ yum install -y \
   vim \
   wget
 
-# Install PostgreSQL client for database debugging
+# Install PostgreSQL client for db debugging
 echo "Installing PostgreSQL client..."
 yum install -y postgresql15
 

@@ -109,10 +109,6 @@ variable "database" {
     postgres_version = string
     instance_class   = string
     name             = string
-    user = object({
-      username = string
-      password = string
-    })
     storage = object({
       allocated_storage     = number
       max_allocated_storage = number
@@ -139,6 +135,16 @@ variable "bastion" {
     ])
     error_message = "All CIDR blocks must be valid IPv4 CIDR notation"
   }
+}
+
+variable "db_user" {
+  description = "The name of the DB user for the application."
+  type        = string
+}
+
+variable "db_password" {
+  description = "The password for the DB user for the application."
+  type        = string
 }
 
 variable "access_token_secret_key" {
