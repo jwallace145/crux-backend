@@ -143,9 +143,9 @@ resource "aws_ecs_service" "service" {
   enable_execute_command = var.enable_ecs_exec
 
   network_configuration {
-    subnets          = var.public_subnet_ids
+    subnets          = var.subnet_ids
     security_groups  = [var.ecs_tasks_security_group_id]
-    assign_public_ip = true # required for internet connection in public subnet for fargate tasks
+    assign_public_ip = var.assign_public_ip
   }
 
   health_check_grace_period_seconds = 120

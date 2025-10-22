@@ -18,5 +18,6 @@ locals {
     "us-east-1b" = "use1b"
     "us-east-1c" = "use1c"
     "us-east-1d" = "use1d"
+    "us-east-1e" = "use1e"
   }
 }

@@ -48,6 +48,12 @@ variable "postgres_version" {
   default     = "16.3"
 }
 
+variable "multi_az" {
+  description = "Whether to enable multi-AZ database type or not."
+  type        = bool
+  default     = false # default to single-AZ databases for costs savings purposes
+}
+
 variable "backup_retention_days" {
   description = "Number of days to retain backups (0-35, 7 recommended)"
   type        = number
@@ -67,9 +73,15 @@ variable "subnet_ids" {
 }
 
 variable "allowed_cidr_blocks" {
-  description = "CIDR blocks allowed to connect to RDS"
+  description = "CIDR blocks allowed to connect to RDS (deprecated - use allowed_security_group_ids for better security)"
   type        = list(string)
-  default     = ["0.0.0.0/0"] # WARNING: Restrict this in production!
+  default     = []
+}
+
+variable "allowed_security_group_ids" {
+  description = "Security group IDs allowed to connect to RDS (e.g., ECS tasks security group)"
+  type        = list(string)
+  default     = []
 }
 
 variable "publicly_accessible" {

@@ -44,9 +44,10 @@ module "api" {
   environment  = var.environment
 
   # networking configs
-  region            = var.network.region
-  vpc_id            = module.network.vpc_id
-  public_subnet_ids = module.network.public_subnet_ids
+  region           = var.network.region
+  vpc_id           = module.network.vpc_id
+  subnet_ids       = module.network.private_subnet_ids
+  assign_public_ip = false # Using private subnets with NAT gateway
 
   # load balancer configs
   target_group_arn            = module.alb.target_group_arn

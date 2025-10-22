@@ -23,9 +23,15 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
-  description = "The IDs of the public subnets to place the ECS service in."
+variable "subnet_ids" {
+  description = "The IDs of the subnets to place the ECS service in (public or private)."
   type        = list(string)
+}
+
+variable "assign_public_ip" {
+  description = "Assign a public IP to the ECS tasks (required for public subnets, false for private subnets with NAT gateway)."
+  type        = bool
+  default     = false
 }
 
 variable "container_image" {

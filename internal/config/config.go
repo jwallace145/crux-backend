@@ -3,16 +3,22 @@ package config
 import "os"
 
 type AppConfig struct {
-	Port    string
-	Address string
+	ServiceName string
+	Version     string
+	Environment string
+	Port        string
+	Address     string
 }
 
 func Load() *AppConfig {
 	port := getEnvOrDefault("PORT", "3000")
 
 	return &AppConfig{
-		Port:    port,
-		Address: "0.0.0.0:" + port,
+		ServiceName: "CruxProject API",
+		Version:     "1.0.0",
+		Environment: "development",
+		Port:        port,
+		Address:     "0.0.0.0:" + port,
 	}
 }
 

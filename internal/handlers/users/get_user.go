@@ -1,23 +1,18 @@
 package users
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"github.com/jwallace145/crux-backend/internal/handlers"
-	"github.com/jwallace145/crux-backend/internal/services"
-
 	"github.com/jwallace145/crux-backend/internal/db"
+	"github.com/jwallace145/crux-backend/internal/handlers"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
 )
 
 // GetUser handles GET /users requests to retrieve the authenticated user
-// Validates the access_token from cookies and returns the user data
-// Returns 401 if token is invalid, expired, or session is revoked
+// Requires AuthMiddleware to be applied - reads user_id from context
 func GetUser(c *fiber.Ctx) error {
 	apiName := "get_user"
 	log := utils.GetLoggerFromContext(c)
@@ -26,97 +21,34 @@ func GetUser(c *fiber.Ctx) error {
 		zap.String("api", apiName),
 	)
 
-	// Get access token from cookie
-	accessToken := c.Cookies("access_token")
-	if accessToken == "" {
-		log.Warn("Missing access token cookie",
+	// Get user ID from context (set by AuthMiddleware)
+	userID, ok := c.Locals("user_id").(uint)
+	if !ok {
+		log.Error("User ID not found in context",
 			zap.String("api", apiName),
 		)
-		return handlers.UnauthorizedResponse(c, apiName, "Not authenticated")
+		return handlers.InternalErrorResponse(c, apiName, "Authentication context missing", nil)
 	}
 
-	log.Info("Access token found in cookie",
+	log.Info("User ID retrieved from context",
 		zap.String("api", apiName),
-	)
-
-	// Validate access token
-	claims, err := services.ValidateAccessToken(accessToken)
-	if err != nil {
-		log.Warn("Invalid access token",
-			zap.Error(err),
-			zap.String("api", apiName),
-		)
-		return handlers.UnauthorizedResponse(c, apiName, "Invalid or expired token")
-	}
-
-	log.Info("Access token validated successfully",
-		zap.String("api", apiName),
-		zap.Uint("user_id", claims.UserID),
-		zap.String("session_id", claims.SessionID),
-	)
-
-	// Verify session exists and is valid
-	var session models.Session
-	if err := db.DB.Where("session_id = ?", claims.SessionID).First(&session).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			log.Warn("Session not found",
-				zap.String("api", apiName),
-				zap.String("session_id", claims.SessionID),
-			)
-			return handlers.UnauthorizedResponse(c, apiName, "Session not found")
-		}
-		log.Error("Database error while looking up session",
-			zap.Error(err),
-			zap.String("api", apiName),
-			zap.String("session_id", claims.SessionID),
-		)
-		return handlers.InternalErrorResponse(c, apiName, "Failed to validate session", nil)
-	}
-
-	log.Info("Session found",
-		zap.String("api", apiName),
-		zap.Uint("session_id", session.ID),
-		zap.String("session_uuid", claims.SessionID),
-	)
-
-	// Check if session is revoked
-	if session.Revoked {
-		log.Warn("Session is revoked",
-			zap.String("api", apiName),
-			zap.String("session_id", claims.SessionID),
-		)
-		return handlers.UnauthorizedResponse(c, apiName, "Session has been revoked")
-	}
-
-	// Check if session is expired
-	if time.Now().After(session.ExpiresAt) {
-		log.Warn("Session is expired",
-			zap.String("api", apiName),
-			zap.String("session_id", claims.SessionID),
-			zap.Time("expires_at", session.ExpiresAt),
-		)
-		return handlers.UnauthorizedResponse(c, apiName, "Session has expired")
-	}
-
-	log.Info("Session is valid",
-		zap.String("api", apiName),
-		zap.String("session_id", claims.SessionID),
+		zap.Uint("user_id", userID),
 	)
 
 	// Fetch user from db
 	var user models.User
-	if err := db.DB.Where("id = ?", claims.UserID).First(&user).Error; err != nil {
+	if err := db.DB.Where("id = ?", userID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			log.Warn("User not found",
 				zap.String("api", apiName),
-				zap.Uint("user_id", claims.UserID),
+				zap.Uint("user_id", userID),
 			)
 			return handlers.UnauthorizedResponse(c, apiName, "User not found")
 		}
 		log.Error("Database error while looking up user",
 			zap.Error(err),
 			zap.String("api", apiName),
-			zap.Uint("user_id", claims.UserID),
+			zap.Uint("user_id", userID),
 		)
 		return handlers.InternalErrorResponse(c, apiName, "Failed to fetch user", nil)
 	}

@@ -7,16 +7,15 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"github.com/jwallace145/crux-backend/internal/handlers"
-	"github.com/jwallace145/crux-backend/internal/services"
-
 	"github.com/jwallace145/crux-backend/internal/db"
+	"github.com/jwallace145/crux-backend/internal/handlers"
 	"github.com/jwallace145/crux-backend/internal/utils"
 	"github.com/jwallace145/crux-backend/models"
 )
 
 // CreateClimb handles POST /climbs requests to create a new climb log entry
 // It validates the request, verifies optional route/gym references, and persists the climb
+// Requires AuthMiddleware to be applied - reads user_id from context
 func CreateClimb(c *fiber.Ctx) error {
 	apiName := "create_climb"
 	log := utils.GetLoggerFromContext(c)
@@ -59,28 +58,16 @@ func CreateClimb(c *fiber.Ctx) error {
 		zap.String("api", apiName),
 	)
 
-	// Get authenticated user ID from token
-	// For now, we'll extract from access token cookie
-	accessToken := c.Cookies("access_token", "")
-	if accessToken == "" {
-		log.Warn("No access token found",
+	// Get user ID from context (set by AuthMiddleware)
+	userID, ok := c.Locals("user_id").(uint)
+	if !ok {
+		log.Error("User ID not found in context",
 			zap.String("api", apiName),
 		)
-		return handlers.UnauthorizedResponse(c, apiName, "Authentication required")
+		return handlers.InternalErrorResponse(c, apiName, "Authentication context missing", nil)
 	}
 
-	claims, err := services.ValidateAccessToken(accessToken)
-	if err != nil {
-		log.Warn("Invalid access token",
-			zap.Error(err),
-			zap.String("api", apiName),
-		)
-		return handlers.UnauthorizedResponse(c, apiName, "Invalid or expired token")
-	}
-
-	userID := claims.UserID
-
-	log.Info("User authenticated",
+	log.Info("User ID retrieved from context",
 		zap.String("api", apiName),
 		zap.Uint("user_id", userID),
 	)

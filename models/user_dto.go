@@ -21,6 +21,13 @@ type UserResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+// UpdateUserRequest represents the request body for updating an existing user
+// Only includes fields that can be updated
+type UpdateUserRequest struct {
+	FirstName *string `json:"first_name" validate:"omitempty,max=100"`
+	LastName  *string `json:"last_name" validate:"omitempty,max=100"`
+}
+
 // ToUserResponse converts a User model to a UserResponse DTO
 func (u *User) ToUserResponse() *UserResponse {
 	return &UserResponse{

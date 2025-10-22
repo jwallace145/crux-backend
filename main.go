@@ -22,6 +22,7 @@ func main() {
 	// Attach middleware for CORS, logging, and authentication
 	app.Use(middleware.CORSMiddleware())
 	app.Use(middleware.LoggerMiddleware())
+	app.Use(middleware.AuthMiddleware())
 
 	// Connect to db and perform schema migrations
 	db.ConnectDB()

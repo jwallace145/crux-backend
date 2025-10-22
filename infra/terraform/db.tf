@@ -11,11 +11,14 @@ module "db" {
   # Database details
   instance_class   = var.database.instance_class
   postgres_version = var.database.postgres_version
+  multi_az         = var.database.multi_az
   db_name          = var.database.name
 
   # Networking configs
-  vpc_id     = module.network.vpc_id
-  subnet_ids = module.network.public_subnet_ids
+  vpc_id                     = module.network.vpc_id
+  subnet_ids                 = module.network.private_subnet_ids
+  allowed_security_group_ids = [module.alb.ecs_tasks_security_group_id]
+  publicly_accessible        = false # Database in private subnet
 
   # Database user details
   db_username = var.db_user

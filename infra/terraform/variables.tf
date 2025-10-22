@@ -20,7 +20,15 @@ variable "network" {
   type = object({
     region         = string
     vpc_cidr_block = string
+    nat_gateways = map(object({
+      availability_zone = string
+      enabled           = bool
+    }))
     public_subnets = map(object({
+      availability_zone = string
+      subnet_cidr_block = string
+    }))
+    private_subnets = map(object({
       availability_zone = string
       subnet_cidr_block = string
     }))
@@ -52,6 +60,13 @@ variable "network" {
       )
     ])
     error_message = "All public subnets must use a valid availability zone in the network region."
+  }
+
+  validation {
+    condition = length(distinct([
+      for nat in var.network.nat_gateways : nat.availability_zone
+    ])) == length(var.network.nat_gateways)
+    error_message = "Only a single NAT gateway can be defined for each availability zone."
   }
 }
 
@@ -108,6 +123,7 @@ variable "database" {
   type = object({
     postgres_version = string
     instance_class   = string
+    multi_az         = bool
     name             = string
     storage = object({
       allocated_storage     = number

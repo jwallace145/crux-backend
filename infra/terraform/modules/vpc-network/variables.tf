@@ -1,51 +1,76 @@
 variable "service_name" {
   type        = string
-  description = "The name of the VPC network to be created."
-  default     = "crux-backend"
+  description = "The service name for tagging resources"
 }
 
 variable "environment" {
-  description = "The environment of CruxBackend."
   type        = string
-
-  validation {
-    condition     = contains(["dev", "stg", "prod"], var.environment)
-    error_message = "The environment must be 'dev', 'stg', or 'prod'."
-  }
+  description = "The environment (dev, stg, prod)"
 }
 
 variable "region" {
-  description = "The AWS region of the VPC network to be created."
   type        = string
-
-  validation {
-    condition     = contains(local.valid_regions, var.region)
-    error_message = "The AWS region must be 'us-east-1'."
-  }
+  description = "The AWS region for the VPC"
 }
 
 variable "vpc_cidr_block" {
   type        = string
-  description = "The CIDR block of the VPC network to be created."
+  description = "The CIDR block for the VPC"
+}
+
+variable "enable_dns_hostnames" {
+  type        = bool
+  description = "Enable DNS hostnames in the VPC"
+  default     = true
+}
+
+variable "enable_dns_support" {
+  type        = bool
+  description = "Enable DNS support in the VPC"
+  default     = true
 }
 
 variable "public_subnets" {
-  description = "The public subnets to create in the VPC network with access to the external web."
-
+  description = "Map of public subnet configurations"
   type = map(object({
     availability_zone = string
     subnet_cidr_block = string
   }))
 }
 
-variable "enable_dns_hostnames" {
-  type        = bool
-  description = "Enable DNS hostnames in VPC network."
-  default     = true
+variable "private_subnets" {
+  description = "Map of private subnet configurations"
+  type = map(object({
+    availability_zone = string
+    subnet_cidr_block = string
+  }))
+  default = {}
 }
 
-variable "enable_dns_support" {
-  type        = bool
-  description = "Enable DNS support in VPC network."
-  default     = true
+variable "nat_gateways" {
+  description = "Map of NAT gateway configurations. Each enabled NAT gateway must have a corresponding public subnet in the same AZ."
+  type = map(object({
+    availability_zone = string
+    enabled           = bool
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for key, nat in var.nat_gateways :
+      !nat.enabled || anytrue([
+        for subnet in var.public_subnets :
+        subnet.availability_zone == nat.availability_zone
+      ])
+    ])
+    error_message = "Each enabled NAT gateway must have at least one corresponding public subnet in the same availability zone."
+  }
+
+  validation {
+    condition = alltrue([
+      for key, nat in var.nat_gateways :
+      contains(lookup(local.valid_availability_zones, var.region, []), nat.availability_zone)
+    ])
+    error_message = "All NAT gateways must be in valid availability zones for the specified region."
+  }
 }

@@ -27,8 +27,8 @@ resource "aws_db_instance" "this" {
   backup_window           = "03:00-04:00" # 3-4 AM UTC
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
-  # High Availability (DISABLED for cost savings)
-  multi_az = false # Enabling would double cost
+  # High Availability
+  multi_az = var.multi_az
 
   # Performance Insights (DISABLED for cost savings)
   performance_insights_enabled = false # Would add ~$7/month
@@ -62,14 +62,6 @@ resource "aws_security_group" "this" {
   description = "Security group for ${var.db_name} RDS instance."
   vpc_id      = var.vpc_id
 
-  ingress {
-    description = "CruxBackend PostgreSQL DB access"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
-  }
-
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -81,4 +73,28 @@ resource "aws_security_group" "this" {
   tags = {
     Name = "${var.db_name}-rds-sg"
   }
+}
+
+# Security group rule for CIDR-based access (backward compatibility)
+resource "aws_security_group_rule" "cidr_ingress" {
+  count             = length(var.allowed_cidr_blocks) > 0 ? 1 : 0
+  type              = "ingress"
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
+  cidr_blocks       = var.allowed_cidr_blocks
+  security_group_id = aws_security_group.this.id
+  description       = "PostgreSQL access from CIDR blocks"
+}
+
+# Security group rules for security group-based access (recommended)
+resource "aws_security_group_rule" "sg_ingress" {
+  count                    = length(var.allowed_security_group_ids)
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = var.allowed_security_group_ids[count.index]
+  security_group_id        = aws_security_group.this.id
+  description              = "PostgreSQL access from security group ${var.allowed_security_group_ids[count.index]}"
 }
