@@ -96,6 +96,9 @@ func migrateModels(db *gorm.DB) error {
 		&models.Route{},
 		&models.Gym{},
 		&models.Climb{},
+		&models.TrainingSession{},
+		&models.RopeClimb{},
+		&models.Boulder{},
 	}
 
 	log.Info("Starting model migration", zap.Int("modelCount", len(modelsToMigrate)))

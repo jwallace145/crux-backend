@@ -1,54 +1,79 @@
+# ===============================================
+# Crux Project Docker Compose (Local Development)
+# ===============================================
+
+# This file is used to create a local development environment for the Crux Project.
+# It includes a PostgreSQL database and a Go Fiber API server. Use the command shortcuts
+# given in the Makefile to start and stop the environment.
+
 services:
-  # PostgreSQL Database
+
+  # ================================
+  # Crux Project PostgreSQL Database
+  # ================================
+
   db:
     image: postgres:15
-    container_name: cruxdb
+    container_name: crux-project-db
     restart: always
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: crux_user
+      POSTGRES_USER: crux_project_db_admin
       POSTGRES_PASSWORD: devpass
-      POSTGRES_DB: cruxdb
+      POSTGRES_DB: crux_project_db
     volumes:
-      - cruxdb_data:/var/lib/postgresql/data
+      - crux_project_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U crux_user -d cruxdb"]
+      test: ["CMD-SHELL", "pg_isready -U crux_project_db_admin -d crux_project_db"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - crux-network
+      - crux-project-network
 
-  # Fiber API Application
+
+  # =========================
+  # Crux Project Go Fiber API
+  # =========================
+
   api:
     build:
       context: .
       dockerfile: Dockerfile.local
       args:
         PORT: 3000
-    container_name: crux-api
+    container_name: crux-project-api
     restart: always
     ports:
-      - "3000:3000"  # Adjust to your Fiber app port
+      - "3000:3000"
     environment:
-      # Database connection settings
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: crux_user
-      DB_PASSWORD: devpass
-      DB_NAME: cruxdb
-      ACCESS_TOKEN_SECRET_KEY: test-access-token-secret-key
-      REFRESH_TOKEN_SECRET_KEY: test-refresh-token-secret-key
 
-      # Application settings
+      # ====================
+      # Application Settings
+      # ====================
+
       APP_ENV: development
       APP_PORT: 3000
       API_VERSION: 1.0.0
 
-      # Optional: Add any other env vars your app needs
-      # JWT_SECRET: your-dev-secret
-      # API_TIMEOUT: 30s
+      # =================
+      # Database Settings
+      # =================
+
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: crux_project_db
+      DB_USER: crux_project_db_admin
+      DB_PASSWORD: devpass
+
+      # =======================
+      # Authentication Settings
+      # =======================
+
+      ACCESS_TOKEN_SECRET_KEY: "test-access-token-secret-key"
+      REFRESH_TOKEN_SECRET_KEY: "test-refresh-token-secret-key"
+
     depends_on:
       db:
         condition: service_healthy
@@ -59,7 +84,7 @@ services:
       - /app/vendor
       - /app/bin
     networks:
-      - crux-network
+      - crux-project-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
@@ -68,9 +93,9 @@ services:
       start_period: 40s
 
 networks:
-  crux-network:
+  crux-project-network:
     driver: bridge
 
 volumes:
-  cruxdb_data:
-    name: cruxdb_data
+  crux_project_db_data:
+    name: crux_project_db_data
