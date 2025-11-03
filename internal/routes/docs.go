@@ -7,6 +7,7 @@ import (
 )
 
 func SetupDocsRoutes(app *fiber.App) {
+	// Public routes (no authentication required)
 	app.Get("/docs", docs.ServeAPIDocs)
 	app.Get("/docs/openapi.yaml", docs.ServeOpenAPISpec)
 }

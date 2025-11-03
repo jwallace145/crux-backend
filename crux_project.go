@@ -19,19 +19,23 @@ func main() {
 	cfg := config.Load()
 	log := utils.Log
 
-	// Attach middleware for CORS, logging, and authentication
-	app.Use(middleware.CORSMiddleware())
-	app.Use(middleware.LoggerMiddleware())
-	app.Use(middleware.AuthMiddleware())
+	// Initialize middleware
+	corsMiddelware := middleware.CORSMiddleware()
+	loggerMiddleware := middleware.LoggerMiddleware()
+	authMiddleware := middleware.AuthMiddleware()
+
+	// Attach global middleware for CORS and logging
+	app.Use(corsMiddelware)
+	app.Use(loggerMiddleware)
 
 	// Connect to db and perform schema migrations
 	db.ConnectDB()
 
-	// Setup API routes
+	// Setup routes
 	routes.SetupHealthCheckRoute(app)
-	routes.SetupAuthRoutes(app)
-	routes.SetupUserRoutes(app)
-	routes.SetupClimbRoutes(app)
+	routes.SetupAuthRoutes(app, authMiddleware)
+	routes.SetupUserRoutes(app, authMiddleware)
+	routes.SetupClimbRoutes(app, authMiddleware)
 	routes.SetupDocsRoutes(app)
 
 	log.Info("Starting CruxProject API server",

@@ -6,8 +6,11 @@ import (
 	"github.com/jwallace145/crux-backend/internal/handlers/auth"
 )
 
-func SetupAuthRoutes(app *fiber.App) {
+func SetupAuthRoutes(app *fiber.App, authMiddleware fiber.Handler) {
+	// Public routes (no authentication required)
 	app.Post("/login", auth.Login)
-	app.Post("/logout", auth.Logout)
 	app.Post("/refresh", auth.Refresh)
+
+	// Protected routes (authentication required)
+	app.Post("/logout", authMiddleware, auth.Logout)
 }
