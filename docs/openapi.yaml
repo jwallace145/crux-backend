@@ -35,6 +35,10 @@ tags:
     description: User management operations
   - name: Climbs
     description: Climb logging and retrieval
+  - name: Gyms
+    description: Climbing gym management and discovery
+  - name: Training Sessions
+    description: Training session logging and management
 
 paths:
   /health:
@@ -363,6 +367,249 @@ paths:
                             description: End date used for filtering
         '400':
           $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /gyms:
+    post:
+      tags:
+        - Gyms
+      summary: Create a new gym
+      description: |
+        Add a new climbing gym to the database.
+
+        Requires authentication. All gym attributes can be specified including location,
+        facilities, pricing, and contact information.
+      operationId: createGym
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGymRequest'
+            example:
+              name: "Brooklyn Boulders"
+              type: "full"
+              city: "Brooklyn"
+              country: "USA"
+              state: "New York"
+              address: "575 Degraw St"
+              postal_code: "11217"
+              description: "Premier climbing facility with bouldering and rope climbing"
+              phone: "+1-718-555-0123"
+              email: "info@brooklynboulders.com"
+              website: "https://brooklynboulders.com"
+              has_bouldering: true
+              has_top_rope: true
+              has_lead_climbing: true
+              has_gear_rental: true
+              has_cafe: true
+              active: true
+      responses:
+        '201':
+          description: Gym created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FullGymResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags:
+        - Gyms
+      summary: Get gyms
+      description: |
+        Retrieve climbing gym information.
+
+        If the `id` query parameter is provided, returns a specific gym.
+        If no `id` is provided, returns all gyms in the database ordered by name.
+
+        Requires authentication.
+      operationId: getGyms
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: false
+          description: Optional gym ID to retrieve a specific gym
+          schema:
+            type: integer
+            format: uint
+            example: 1
+      responses:
+        '200':
+          description: Gym(s) retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        oneOf:
+                          - $ref: '#/components/schemas/FullGymResponse'
+                          - type: object
+                            properties:
+                              gyms:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/FullGymResponse'
+                              count:
+                                type: integer
+                                description: Total number of gyms returned
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Gym not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /training-sessions:
+    get:
+      tags:
+        - Training Sessions
+      summary: Get user training sessions
+      description: |
+        Retrieve training sessions for the authenticated user with optional date range filtering.
+
+        Results are returned in descending order by session date (most recent first).
+        User ID is automatically extracted from the authentication context.
+      operationId: getTrainingSessions
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: false
+          description: Start date for filtering training sessions (RFC3339 format). If not provided, queries from the beginning of time.
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:00:00Z"
+        - name: end_date
+          in: query
+          required: false
+          description: End date for filtering training sessions (RFC3339 format). If not provided, queries until now.
+          schema:
+            type: string
+            format: date-time
+            example: "2024-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Training sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          training_sessions:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/TrainingSessionResponse'
+                          count:
+                            type: integer
+                            description: Total number of training sessions returned
+                          start_date:
+                            type: string
+                            format: date-time
+                            description: Start date used for filtering
+                          end_date:
+                            type: string
+                            format: date-time
+                            description: End date used for filtering
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Training Sessions
+      summary: Create a new training session
+      description: |
+        Log a new climbing training session at a gym with boulders and rope climbs.
+
+        Requires authentication. Each session must be linked to a climbing gym and can
+        optionally have training partners associated with it.
+      operationId: createTrainingSession
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrainingSessionRequest'
+            example:
+              gym_id: 1
+              session_date: "2024-01-20T14:00:00Z"
+              description: "Great afternoon session with some challenging routes"
+              partner_ids: [2, 3]
+              boulders:
+                - grade: "V5"
+                  color_tag: "Blue"
+                  outcome: "Flash"
+                  notes: "Nice overhang problem"
+                - grade: "V7"
+                  outcome: "Fell"
+                  notes: "Struggled with the crux"
+              rope_climbs:
+                - climb_type: "Lead"
+                  grade: "5.11a"
+                  outcome: "Redpoint"
+                  notes: "Finally sent it after 3 attempts"
+                - climb_type: "TR"
+                  grade: "5.10c"
+                  outcome: "Flash"
+      responses:
+        '201':
+          description: Training session created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TrainingSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -740,6 +987,683 @@ components:
           type: string
           description: Personal notes
           example: "Great route with challenging crux"
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    BoulderRequest:
+      type: object
+      required:
+        - grade
+        - outcome
+      properties:
+        grade:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: V-scale grade (e.g., "V3", "V5")
+          example: "V5"
+        color_tag:
+          type: string
+          maxLength: 50
+          description: Optional color tag for the boulder
+          example: "Blue"
+        outcome:
+          type: string
+          description: Outcome of the boulder attempt
+          enum:
+            - Fell
+            - Flash
+            - Onsite
+            - Redpoint
+          example: "Flash"
+        notes:
+          type: string
+          maxLength: 1000
+          description: Personal notes about this boulder
+          example: "Nice overhang problem"
+
+    RopeClimbRequest:
+      type: object
+      required:
+        - climb_type
+        - grade
+        - outcome
+      properties:
+        climb_type:
+          type: string
+          description: Type of rope climb
+          enum:
+            - TR
+            - Lead
+          example: "Lead"
+        grade:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: YDS grade (e.g., "5.10a", "5.11d")
+          example: "5.11a"
+        outcome:
+          type: string
+          description: Outcome of the climb attempt
+          enum:
+            - Fell
+            - Hung
+            - Flash
+            - Onsite
+            - Redpoint
+          example: "Redpoint"
+        notes:
+          type: string
+          maxLength: 1000
+          description: Personal notes about this climb
+          example: "Finally sent it after 3 attempts"
+
+    CreateTrainingSessionRequest:
+      type: object
+      required:
+        - gym_id
+        - session_date
+      properties:
+        gym_id:
+          type: integer
+          format: uint
+          description: ID of the gym where the session took place
+          example: 1
+        session_date:
+          type: string
+          format: date-time
+          description: Date and time of the training session (cannot be in the future)
+          example: "2024-01-20T14:00:00Z"
+        description:
+          type: string
+          maxLength: 1000
+          description: Optional description of the training session
+          example: "Great afternoon session with some challenging routes"
+        partner_ids:
+          type: array
+          items:
+            type: integer
+            format: uint
+          description: Optional list of user IDs who were training partners
+          example: [2, 3]
+        boulders:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoulderRequest'
+          description: List of boulder problems climbed during the session
+        rope_climbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RopeClimbRequest'
+          description: List of rope climbs completed during the session
+
+    BoulderResponse:
+      type: object
+      required:
+        - id
+        - training_session_id
+        - grade
+        - outcome
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: Boulder ID
+          example: 1
+        training_session_id:
+          type: integer
+          format: uint
+          description: Training session ID
+          example: 1
+        grade:
+          type: string
+          description: V-scale grade
+          example: "V5"
+        color_tag:
+          type: string
+          description: Color tag
+          example: "Blue"
+        outcome:
+          type: string
+          description: Outcome
+          enum:
+            - Fell
+            - Flash
+            - Onsite
+            - Redpoint
+          example: "Flash"
+        notes:
+          type: string
+          description: Notes
+          example: "Nice overhang problem"
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    RopeClimbResponse:
+      type: object
+      required:
+        - id
+        - training_session_id
+        - climb_type
+        - grade
+        - outcome
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: Rope climb ID
+          example: 1
+        training_session_id:
+          type: integer
+          format: uint
+          description: Training session ID
+          example: 1
+        climb_type:
+          type: string
+          description: Type of rope climb
+          enum:
+            - TR
+            - Lead
+          example: "Lead"
+        grade:
+          type: string
+          description: YDS grade
+          example: "5.11a"
+        outcome:
+          type: string
+          description: Outcome
+          enum:
+            - Fell
+            - Hung
+            - Flash
+            - Onsite
+            - Redpoint
+          example: "Redpoint"
+        notes:
+          type: string
+          description: Notes
+          example: "Finally sent it after 3 attempts"
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    PartnerResponse:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: User ID
+          example: 2
+        username:
+          type: string
+          description: Username
+          example: "climbbuddy"
+        first_name:
+          type: string
+          description: First name
+          example: "Jane"
+        last_name:
+          type: string
+          description: Last name
+          example: "Smith"
+
+    GymResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: Gym ID
+          example: 1
+        name:
+          type: string
+          description: Gym name
+          example: "Brooklyn Boulders"
+        city:
+          type: string
+          description: City
+          example: "New York"
+
+    CreateGymRequest:
+      type: object
+      required:
+        - name
+        - type
+        - city
+        - country
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Name of the climbing gym
+          example: "Brooklyn Boulders"
+        type:
+          type: string
+          description: Type of climbing facility
+          enum:
+            - bouldering
+            - roped
+            - full
+          example: "full"
+        city:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: City where the gym is located
+          example: "Brooklyn"
+        country:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Country where the gym is located
+          example: "USA"
+        description:
+          type: string
+          maxLength: 5000
+          description: Description of the gym
+          example: "Premier climbing facility with bouldering and rope climbing"
+        address:
+          type: string
+          maxLength: 300
+          description: Street address
+          example: "575 Degraw St"
+        state:
+          type: string
+          maxLength: 100
+          description: State (for US/Canada)
+          example: "New York"
+        province:
+          type: string
+          maxLength: 100
+          description: Province (alternative to state)
+          example: "Ontario"
+        postal_code:
+          type: string
+          maxLength: 20
+          description: Postal/ZIP code
+          example: "11217"
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: GPS latitude coordinate
+          example: 40.6782
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: GPS longitude coordinate
+          example: -73.9442
+        phone:
+          type: string
+          maxLength: 50
+          description: Contact phone number
+          example: "+1-718-555-0123"
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          description: Contact email address
+          example: "info@brooklynboulders.com"
+        website:
+          type: string
+          format: uri
+          maxLength: 300
+          description: Website URL
+          example: "https://brooklynboulders.com"
+        hours:
+          type: string
+          maxLength: 1000
+          description: Operating hours (free-form text)
+          example: "Mon-Fri: 6am-11pm, Sat-Sun: 8am-9pm"
+        has_bouldering:
+          type: boolean
+          description: Has bouldering facilities
+          default: false
+        has_top_rope:
+          type: boolean
+          description: Has top rope climbing
+          default: false
+        has_lead_climbing:
+          type: boolean
+          description: Has lead climbing
+          default: false
+        has_auto_belay:
+          type: boolean
+          description: Has auto belay systems
+          default: false
+        has_kids_area:
+          type: boolean
+          description: Has dedicated kids area
+          default: false
+        has_training_area:
+          type: boolean
+          description: Has training/workout area
+          default: false
+        has_yoga_classes:
+          type: boolean
+          description: Offers yoga classes
+          default: false
+        has_shower:
+          type: boolean
+          description: Has shower facilities
+          default: false
+        has_parking:
+          type: boolean
+          description: Has parking available
+          default: false
+        has_gear_rental:
+          type: boolean
+          description: Offers gear rental
+          default: false
+        has_pro_shop:
+          type: boolean
+          description: Has pro shop
+          default: false
+        has_cafe:
+          type: boolean
+          description: Has cafe/food service
+          default: false
+        wall_height:
+          type: integer
+          minimum: 0
+          description: Maximum wall height in feet
+          example: 45
+        square_feet:
+          type: integer
+          minimum: 0
+          description: Total climbing area in square feet
+          example: 22000
+        day_pass_price:
+          type: number
+          format: double
+          minimum: 0
+          description: Day pass price in dollars
+          example: 25.00
+        monthly_price:
+          type: number
+          format: double
+          minimum: 0
+          description: Monthly membership price in dollars
+          example: 95.00
+        yearly_price:
+          type: number
+          format: double
+          minimum: 0
+          description: Yearly membership price in dollars
+          example: 900.00
+        gear_rental_price:
+          type: number
+          format: double
+          minimum: 0
+          description: Gear rental price in dollars
+          example: 5.00
+        notes:
+          type: string
+          maxLength: 5000
+          description: Additional notes or comments
+          example: "Beginner friendly with excellent route setting"
+        active:
+          type: boolean
+          description: Whether the gym is currently open/operational
+          default: true
+
+    FullGymResponse:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - city
+        - country
+        - active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: Gym ID
+          example: 1
+        name:
+          type: string
+          description: Gym name
+          example: "Brooklyn Boulders"
+        description:
+          type: string
+          description: Description
+          example: "Premier climbing facility"
+        type:
+          type: string
+          description: Gym type
+          enum:
+            - bouldering
+            - roped
+            - full
+          example: "full"
+        address:
+          type: string
+          description: Street address
+          example: "575 Degraw St"
+        city:
+          type: string
+          description: City
+          example: "Brooklyn"
+        state:
+          type: string
+          description: State
+          example: "New York"
+        province:
+          type: string
+          description: Province
+          example: "Ontario"
+        country:
+          type: string
+          description: Country
+          example: "USA"
+        postal_code:
+          type: string
+          description: Postal code
+          example: "11217"
+        latitude:
+          type: number
+          format: double
+          description: GPS latitude
+          example: 40.6782
+        longitude:
+          type: number
+          format: double
+          description: GPS longitude
+          example: -73.9442
+        phone:
+          type: string
+          description: Phone number
+          example: "+1-718-555-0123"
+        email:
+          type: string
+          description: Email
+          example: "info@brooklynboulders.com"
+        website:
+          type: string
+          description: Website
+          example: "https://brooklynboulders.com"
+        hours:
+          type: string
+          description: Operating hours
+          example: "Mon-Fri: 6am-11pm"
+        has_bouldering:
+          type: boolean
+          description: Has bouldering
+        has_top_rope:
+          type: boolean
+          description: Has top rope
+        has_lead_climbing:
+          type: boolean
+          description: Has lead climbing
+        has_auto_belay:
+          type: boolean
+          description: Has auto belay
+        has_kids_area:
+          type: boolean
+          description: Has kids area
+        has_training_area:
+          type: boolean
+          description: Has training area
+        has_yoga_classes:
+          type: boolean
+          description: Has yoga classes
+        has_shower:
+          type: boolean
+          description: Has showers
+        has_parking:
+          type: boolean
+          description: Has parking
+        has_gear_rental:
+          type: boolean
+          description: Has gear rental
+        has_pro_shop:
+          type: boolean
+          description: Has pro shop
+        has_cafe:
+          type: boolean
+          description: Has cafe
+        wall_height:
+          type: integer
+          description: Wall height in feet
+          example: 45
+        square_feet:
+          type: integer
+          description: Square footage
+          example: 22000
+        day_pass_price:
+          type: number
+          format: double
+          description: Day pass price
+          example: 25.00
+        monthly_price:
+          type: number
+          format: double
+          description: Monthly price
+          example: 95.00
+        yearly_price:
+          type: number
+          format: double
+          description: Yearly price
+          example: 900.00
+        gear_rental_price:
+          type: number
+          format: double
+          description: Gear rental price
+          example: 5.00
+        notes:
+          type: string
+          description: Notes
+          example: "Beginner friendly"
+        active:
+          type: boolean
+          description: Is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    TrainingSessionResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - gym_id
+        - session_date
+        - total_climbs
+        - total_sends
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: uint
+          description: Training session ID
+          example: 1
+        user_id:
+          type: integer
+          format: uint
+          description: User ID who logged the session
+          example: 1
+        gym_id:
+          type: integer
+          format: uint
+          description: Gym ID where the session took place
+          example: 1
+        session_date:
+          type: string
+          format: date-time
+          description: Session date and time
+          example: "2024-01-20T14:00:00Z"
+        description:
+          type: string
+          description: Session description
+          example: "Great afternoon session with some challenging routes"
+        gym:
+          $ref: '#/components/schemas/GymResponse'
+        partners:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartnerResponse'
+          description: Training partners
+        boulders:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoulderResponse'
+          description: Boulder problems climbed
+        rope_climbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RopeClimbResponse'
+          description: Rope climbs completed
+        total_climbs:
+          type: integer
+          description: Total number of climbs (boulders + rope climbs)
+          example: 4
+        total_sends:
+          type: integer
+          description: Total number of successful sends
+          example: 2
         created_at:
           type: string
           format: date-time

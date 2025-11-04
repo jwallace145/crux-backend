@@ -36,6 +36,8 @@ func main() {
 	routes.SetupAuthRoutes(app, authMiddleware)
 	routes.SetupUserRoutes(app, authMiddleware)
 	routes.SetupClimbRoutes(app, authMiddleware)
+	routes.SetupGymRoutes(app, authMiddleware)
+	routes.SetupTrainingSessionRoutes(app, authMiddleware)
 	routes.SetupDocsRoutes(app)
 
 	log.Info("Starting CruxProject API server",
