@@ -184,6 +184,8 @@ func Login(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   int(services.AccessTokenExpiry.Seconds()),
 		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "None",
 	})
 
 	// Refresh token cookie (long-lived)
@@ -193,6 +195,8 @@ func Login(c *fiber.Ctx) error {
 		Path:     "/",
 		MaxAge:   int(services.RefreshTokenExpiry.Seconds()),
 		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "None",
 	})
 
 	log.Info("Cookies set successfully",
