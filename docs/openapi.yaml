@@ -23,7 +23,7 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development server - Use this to test local changes
-  - url: http://dev-api.cruxproject.io
+  - url: https://dev-api.cruxproject.io
     description: Development server - Use this to test deployed changes
 
 tags:
@@ -437,10 +437,12 @@ paths:
         - Gyms
       summary: Get gyms
       description: |
-        Retrieve climbing gym information.
+        Retrieve climbing gyms in the database filtered by optional parameters.
 
-        If the `id` query parameter is provided, returns a specific gym.
-        If no `id` is provided, returns all gyms in the database ordered by name.
+        This endpoint returns a list of the climbing gyms matching the specified
+        criteria. The caller can specify `id`, `state`, and `city` to filter the
+        results given the optional parameters. If no parameters are provided, all
+        climbing gyms are returned.
 
         Requires authentication.
       operationId: getGyms
@@ -455,6 +457,22 @@ paths:
             type: integer
             format: uint
             example: 1
+        - name: state
+          in: query
+          required: false
+          description: Optional state to filter gyms by location
+          schema:
+            type: string
+            maxLength: 100
+            example: "New York"
+        - name: city
+          in: query
+          required: false
+          description: Optional city to filter gyms by location
+          schema:
+            type: string
+            maxLength: 100
+            example: "Brooklyn"
       responses:
         '200':
           description: Gym(s) retrieved successfully

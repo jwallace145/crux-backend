@@ -50,9 +50,8 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder /app/crux-api .
 
-# Copy any necessary config files or assets if needed
-# COPY --from=builder /app/configs ./configs
-# COPY --from=builder /app/migrations ./migrations
+# Copy OpenAPI specs from builder to serve Scalar API docs
+COPY --from=builder /app/docs ./docs
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app

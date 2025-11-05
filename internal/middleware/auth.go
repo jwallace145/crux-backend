@@ -156,8 +156,8 @@ func AuthMiddleware() fiber.Handler {
 			Path:     "/",
 			MaxAge:   int(services.AccessTokenExpiry.Seconds()),
 			HTTPOnly: true,
-			Secure:   c.Protocol() == "https",
-			SameSite: "Lax",
+			Secure:   true,
+			SameSite: "None",
 		})
 
 		log.Info("New access token cookie set successfully, token refreshed automatically",

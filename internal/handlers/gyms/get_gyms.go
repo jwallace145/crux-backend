@@ -16,8 +16,10 @@ import (
 // GetGyms handles GET /gyms requests to retrieve gyms
 // Query parameters:
 //   - id (optional): The ID of a specific gym to retrieve
+//   - state (optional): Filter gyms by state
+//   - city (optional): Filter gyms by city
 //
-// If id is not provided, returns all gyms
+// If id is not provided, returns all gyms (optionally filtered by state/city)
 // If id is provided, returns the specific gym with that ID
 func GetGyms(c *fiber.Ctx) error {
 	apiName := "get_gyms"
@@ -27,16 +29,18 @@ func GetGyms(c *fiber.Ctx) error {
 		zap.String("api", apiName),
 	)
 
-	// Get optional id query parameter
+	// Get optional query parameters
 	idStr := c.Query("id")
+	state := c.Query("state")
+	city := c.Query("city")
 
 	// If ID is provided, return specific gym
 	if idStr != "" {
 		return getGymByID(c, apiName, log, idStr)
 	}
 
-	// Otherwise, return all gyms
-	return getAllGyms(c, apiName, log)
+	// Otherwise, return all gyms (optionally filtered by state/city)
+	return getAllGyms(c, apiName, log, state, city)
 }
 
 // getGymByID retrieves a specific gym by ID
@@ -97,19 +101,37 @@ func getGymByID(c *fiber.Ctx, apiName string, log *zap.Logger, idStr string) err
 	return handlers.SuccessResponse(c, apiName, response, "Gym retrieved successfully")
 }
 
-// getAllGyms retrieves all gyms from the database
-func getAllGyms(c *fiber.Ctx, apiName string, log *zap.Logger) error {
-	log.Info("Retrieving all gyms",
-		zap.String("api", apiName),
-	)
+// getAllGyms retrieves all gyms from the database with optional filtering
+func getAllGyms(c *fiber.Ctx, apiName string, log *zap.Logger, state, city string) error {
+	logFields := []zap.Field{zap.String("api", apiName)}
 
-	// Query all gyms from db, ordered by name
+	if state != "" {
+		logFields = append(logFields, zap.String("state", state))
+	}
+	if city != "" {
+		logFields = append(logFields, zap.String("city", city))
+	}
+
+	log.Info("Retrieving gyms", logFields...)
+
+	// Build query with optional filters
 	var gyms []models.Gym
-	query := db.DB.Order("name ASC").Find(&gyms)
+	query := db.DB.Order("name ASC")
 
-	if query.Error != nil {
+	// Apply state filter if provided
+	if state != "" {
+		query = query.Where("state = ?", state)
+	}
+
+	// Apply city filter if provided
+	if city != "" {
+		query = query.Where("city = ?", city)
+	}
+
+	// Execute query
+	if err := query.Find(&gyms).Error; err != nil {
 		log.Error("Database error while querying gyms",
-			zap.Error(query.Error),
+			zap.Error(err),
 			zap.String("api", apiName),
 		)
 		return handlers.InternalErrorResponse(c, apiName, "Failed to retrieve gyms", nil)
