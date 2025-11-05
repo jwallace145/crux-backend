@@ -1,0 +1,370 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # Go code formatting and imports check
+  go-format-check:
+    name: Go Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Check gofmt formatting
+        run: |
+          unformatted=$(gofmt -l $(find . -name '*.go' -not -path "./vendor/*"))
+          if [ -n "$unformatted" ]; then
+            echo "❌ The following files are not formatted with gofmt:"
+            echo "$unformatted"
+            echo ""
+            echo "Please run 'make fmt' to fix formatting issues"
+            exit 1
+          fi
+          echo "✅ All Go files are properly formatted"
+
+      - name: Check goimports formatting
+        run: |
+          unformatted=$(goimports -l $(find . -name '*.go' -not -path "./vendor/*"))
+          if [ -n "$unformatted" ]; then
+            echo "❌ The following files have import issues:"
+            echo "$unformatted"
+            echo ""
+            echo "Please run 'make fmt' to fix import formatting"
+            exit 1
+          fi
+          echo "✅ All Go imports are properly formatted"
+
+  # Go linting with golangci-lint
+  go-lint:
+    name: Go Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  # Go vet check
+  go-vet:
+    name: Go Vet
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Run go vet
+        run: go vet ./...
+
+  # Go mod tidy check
+  go-mod-tidy:
+    name: Go Mod Tidy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Check go.mod and go.sum are tidy
+        run: |
+          go mod tidy
+          if ! git diff --exit-code go.mod go.sum; then
+            echo "❌ go.mod or go.sum is not tidy"
+            echo ""
+            echo "Please run 'go mod tidy' and commit the changes"
+            exit 1
+          fi
+          echo "✅ go.mod and go.sum are tidy"
+
+  # Go tests with race detector and coverage
+  go-test:
+    name: Go Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Run tests
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+          echo "✅ All tests passed"
+
+      - name: Generate coverage report
+        run: |
+          go tool cover -func=coverage.out > coverage.txt
+          echo "📊 Coverage Summary:"
+          tail -1 coverage.txt
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.out
+            coverage.txt
+          retention-days: 30
+
+  # Terraform formatting check
+  terraform-format:
+    name: Terraform Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Check Terraform formatting
+        run: |
+          if ! terraform fmt -check -recursive infra/; then
+            echo "❌ Terraform code is not formatted"
+            echo ""
+            echo "Please run 'make tf-fmt' to fix formatting issues"
+            exit 1
+          fi
+          echo "✅ All Terraform files are properly formatted"
+
+  # Terraform validation
+  terraform-validate:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Terraform Init
+        run: |
+          cd infra
+          terraform init -backend=false
+
+      - name: Terraform Validate
+        run: |
+          cd infra
+          terraform validate
+          echo "✅ Terraform configuration is valid"
+
+  # General file checks
+  file-checks:
+    name: File Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for trailing whitespace
+        run: |
+          if grep -r '[[:blank:]]$' --include='*.go' --include='*.tf' --include='*.yml' --include='*.yaml' --include='*.md' --exclude-dir=vendor .; then
+            echo "❌ Found trailing whitespace in the above files"
+            echo ""
+            echo "Please remove trailing whitespace"
+            exit 1
+          fi
+          echo "✅ No trailing whitespace found"
+
+      - name: Check for files with missing final newline
+        run: |
+          files_without_newline=""
+          for file in $(find . -type f \( -name '*.go' -o -name '*.tf' -o -name '*.yml' -o -name '*.yaml' \) -not -path "./vendor/*" -not -path "./.git/*"); do
+            if [ -n "$(tail -c 1 "$file")" ]; then
+              files_without_newline="$files_without_newline\n$file"
+            fi
+          done
+          if [ -n "$files_without_newline" ]; then
+            echo "❌ The following files are missing a final newline:"
+            echo -e "$files_without_newline"
+            exit 1
+          fi
+          echo "✅ All files have proper final newlines"
+
+      - name: Check for large files
+        run: |
+          large_files=$(find . -type f -size +1000k -not -path "./.git/*" -not -path "./vendor/*")
+          if [ -n "$large_files" ]; then
+            echo "❌ Found files larger than 1MB:"
+            echo "$large_files"
+            echo ""
+            echo "Large files should not be committed to the repository"
+            exit 1
+          fi
+          echo "✅ No large files found"
+
+      - name: Check for merge conflict markers
+        run: |
+          if grep -r '^<<<<<<< \|^=======$\|^>>>>>>> ' --include='*.go' --include='*.tf' --include='*.yml' --include='*.yaml' --exclude-dir=vendor .; then
+            echo "❌ Found merge conflict markers in the above files"
+            exit 1
+          fi
+          echo "✅ No merge conflict markers found"
+
+      - name: Check for mixed line endings
+        run: |
+          files_with_crlf=$(find . -type f \( -name '*.go' -o -name '*.tf' -o -name '*.yml' -o -name '*.yaml' \) -not -path "./vendor/*" -not -path "./.git/*" -exec file {} \; | grep CRLF)
+          if [ -n "$files_with_crlf" ]; then
+            echo "❌ Found files with CRLF line endings:"
+            echo "$files_with_crlf"
+            echo ""
+            echo "Please convert to LF line endings"
+            exit 1
+          fi
+          echo "✅ All files use consistent line endings"
+
+  # Security checks
+  security-checks:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for private keys
+        run: |
+          if grep -r --include='*.go' --include='*.tf' --include='*.yml' --include='*.yaml' --include='*.json' --exclude-dir=vendor \
+            -e '-----BEGIN.*PRIVATE KEY-----' \
+            -e '-----BEGIN RSA PRIVATE KEY-----' \
+            -e '-----BEGIN DSA PRIVATE KEY-----' \
+            -e '-----BEGIN EC PRIVATE KEY-----' \
+            -e '-----BEGIN OPENSSH PRIVATE KEY-----' .; then
+            echo "❌ Found potential private keys in the above files"
+            echo ""
+            echo "Private keys should never be committed to the repository"
+            exit 1
+          fi
+          echo "✅ No private keys detected"
+
+      - name: Check for sensitive environment variables
+        run: |
+          if grep -r --include='*.go' --include='*.tf' --include='*.yml' --include='*.yaml' --exclude-dir=vendor \
+            -i -E '(AWS_SECRET_ACCESS_KEY|AWS_ACCESS_KEY_ID|DATABASE_PASSWORD|DB_PASSWORD|API_KEY|SECRET_KEY|PRIVATE_KEY)="[^"]+"' .; then
+            echo "⚠️  Found potential hardcoded secrets in the above files"
+            echo ""
+            echo "Secrets should be managed through environment variables or secret management systems"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets detected"
+
+  # Custom code quality checks
+  custom-checks:
+    name: Custom Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check TODOs have issue references
+        run: |
+          todos_without_issues=$(grep -rn 'TODO\|FIXME' --include="*.go" --exclude-dir=vendor . | grep -v '#[0-9]' || true)
+          if [ -n "$todos_without_issues" ]; then
+            echo "❌ Found TODOs/FIXMEs without issue references:"
+            echo "$todos_without_issues"
+            echo ""
+            echo "All TODOs must reference an issue number (e.g., TODO(#123): Description)"
+            exit 1
+          fi
+          echo "✅ All TODOs have issue references"
+
+      - name: Check for debug print statements
+        run: |
+          debug_prints=$(grep -rn 'fmt.Println\|log.Println' --include="*.go" --exclude-dir=vendor --exclude-dir=internal/db . | grep -v '// allow-print' || true)
+          if [ -n "$debug_prints" ]; then
+            echo "❌ Found debug print statements:"
+            echo "$debug_prints"
+            echo ""
+            echo "Use structured logging instead or add '// allow-print' comment if intentional"
+            exit 1
+          fi
+          echo "✅ No debug print statements found"
+
+  # Build check
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build application
+        run: |
+          go build -o bin/crux-project crux_project.go
+          echo "✅ Application builds successfully"
+
+      - name: Check binary size
+        run: |
+          size=$(du -h bin/crux-project | cut -f1)
+          echo "📦 Binary size: $size"
+
+  # Final summary job
+  all-checks-passed:
+    name: All Quality Checks Passed
+    runs-on: ubuntu-latest
+    needs:
+      - go-format-check
+      - go-lint
+      - go-vet
+      - go-mod-tidy
+      - go-test
+      - terraform-format
+      - terraform-validate
+      - file-checks
+      - security-checks
+      - custom-checks
+      - build-check
+    steps:
+      - name: All checks passed
+        run: |
+          echo "✅ All quality checks passed successfully!"
+          echo ""
+          echo "This PR meets all code quality standards and is ready for review."
