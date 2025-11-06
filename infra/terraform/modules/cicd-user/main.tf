@@ -112,6 +112,7 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "iam:DeleteRolePolicy",
       "iam:ListRolePolicies",
       "iam:ListAttachedRolePolicies",
+      "iam:ListAttachedUserPolicies",
       "iam:GetPolicyVersion",
       "iam:GetPolicy",
       "iam:CreatePolicy",
