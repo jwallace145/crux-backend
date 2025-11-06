@@ -192,6 +192,50 @@ jobs:
           terraform validate
           echo "✅ Terraform configuration is valid"
 
+  terraform-plan-dev:
+    name: Terraform Plan (Dev)
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create .env file for terraform
+        run: |
+          cat > .env << EOF
+          ACCESS_TOKEN_SECRET_KEY=${{ secrets.ACCESS_TOKEN_SECRET_KEY }}
+          REFRESH_TOKEN_SECRET_KEY=${{ secrets.REFRESH_TOKEN_SECRET_KEY }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          EOF
+
+      - name: Run terraform validate for dev environment
+        run: |
+          chmod +x infra/scripts/deploy.sh
+          infra/scripts/deploy.sh validate dev
+
+      - name: Run terraform plan for dev environment
+        run: |
+          infra/scripts/deploy.sh plan dev
+
+      - name: Upload terraform plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-dev
+          path: infra/terraform/tfplan-dev
+          retention-days: 7
+
   # General file checks
   file-checks:
     name: File Quality Checks
@@ -331,6 +375,7 @@ jobs:
       - go-test
       - terraform-format
       - terraform-validate
+      - terraform-plan-dev
       - file-checks
       - security-checks
       - custom-checks
