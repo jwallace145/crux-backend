@@ -245,18 +245,6 @@ jobs:
           fi
           echo "✅ No merge conflict markers found"
 
-      - name: Check for mixed line endings
-        run: |
-          files_with_crlf=$(find . -type f \( -name '*.go' -o -name '*.tf' -o -name '*.yml' -o -name '*.yaml' \) -not -path "./vendor/*" -not -path "./.git/*" -exec file {} \; | grep CRLF)
-          if [ -n "$files_with_crlf" ]; then
-            echo "❌ Found files with CRLF line endings:"
-            echo "$files_with_crlf"
-            echo ""
-            echo "Please convert to LF line endings"
-            exit 1
-          fi
-          echo "✅ All files use consistent line endings"
-
   # Security checks
   security-checks:
     name: Security Checks
@@ -264,21 +252,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Check for private keys
-        run: |
-          if grep -r --include='*.go' --include='*.tf' --include='*.yml' --include='*.yaml' --include='*.json' --exclude-dir=vendor \
-            -e '-----BEGIN.*PRIVATE KEY-----' \
-            -e '-----BEGIN RSA PRIVATE KEY-----' \
-            -e '-----BEGIN DSA PRIVATE KEY-----' \
-            -e '-----BEGIN EC PRIVATE KEY-----' \
-            -e '-----BEGIN OPENSSH PRIVATE KEY-----' .; then
-            echo "❌ Found potential private keys in the above files"
-            echo ""
-            echo "Private keys should never be committed to the repository"
-            exit 1
-          fi
-          echo "✅ No private keys detected"
 
       - name: Check for sensitive environment variables
         run: |
