@@ -2,6 +2,7 @@
  * CruxProject Terraform Variables (dev)
  ***************************************/
 
+project_name = "crux-project"
 service_name = "crux"
 environment  = "dev"
 
