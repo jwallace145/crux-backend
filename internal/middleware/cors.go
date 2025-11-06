@@ -14,8 +14,8 @@ func CORSMiddleware() fiber.Handler {
 			"http://localhost:3000",
 			"http://localhost:3001",
 
-			// github pages for scalar api docs
-			"https://jwallace145.github.io",
+			// dev api server for api docs
+			"https://dev-api.cruxproject.io",
 
 			// frontend
 			"https://cruxproject.io",

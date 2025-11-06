@@ -15,20 +15,6 @@ run:
   # Go version to target
   go: "1.24"
 
-# Output configuration
-output:
-  # Colored output
-  colored-line-number: true
-
-  # Print lines of code with issue
-  print-issued-lines: true
-
-  # Print linter name in the end of issue text
-  print-linter-name: true
-
-  # Sort results by file, line, and column
-  sort-results: true
-
 # Linters to enable
 linters:
   enable:

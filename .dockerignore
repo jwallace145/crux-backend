@@ -7,7 +7,6 @@
 *.md
 README.md
 LICENSE
-docs/
 
 # CI/CD
 .github/

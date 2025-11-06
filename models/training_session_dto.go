@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// BoulderRequest represents a boulder problem in the create request
-type BoulderRequest struct {
+// IndoorBoulderRequest represents an indoor boulder problem in the create request
+type IndoorBoulderRequest struct {
 	Grade    string  `json:"grade" validate:"required,min=1,max=20"`
 	ColorTag *string `json:"color_tag,omitempty" validate:"omitempty,max=50"`
 	Outcome  string  `json:"outcome" validate:"required,oneof=Fell Flash Onsite Redpoint"`
@@ -31,12 +31,12 @@ type CreateTrainingSessionRequest struct {
 	PartnerIDs  []uint `json:"partner_ids,omitempty"`
 
 	// Climbs during the session
-	Boulders   []BoulderRequest   `json:"boulders,omitempty"`
-	RopeClimbs []RopeClimbRequest `json:"rope_climbs,omitempty"`
+	IndoorBoulders []IndoorBoulderRequest `json:"indoor_boulders,omitempty"`
+	RopeClimbs     []RopeClimbRequest     `json:"rope_climbs,omitempty"`
 }
 
-// BoulderResponse represents a boulder problem in the response
-type BoulderResponse struct {
+// IndoorBoulderResponse represents an indoor boulder problem in the response
+type IndoorBoulderResponse struct {
 	ID                uint      `json:"id"`
 	TrainingSessionID uint      `json:"training_session_id"`
 	Grade             string    `json:"grade"`
@@ -85,10 +85,10 @@ type TrainingSessionResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 
 	// Nested relationships
-	Gym        *GymResponse        `json:"gym,omitempty"`
-	Partners   []PartnerResponse   `json:"partners,omitempty"`
-	Boulders   []BoulderResponse   `json:"boulders,omitempty"`
-	RopeClimbs []RopeClimbResponse `json:"rope_climbs,omitempty"`
+	Gym            *GymResponse            `json:"gym,omitempty"`
+	Partners       []PartnerResponse       `json:"partners,omitempty"`
+	IndoorBoulders []IndoorBoulderResponse `json:"indoor_boulders,omitempty"`
+	RopeClimbs     []RopeClimbResponse     `json:"rope_climbs,omitempty"`
 
 	// Statistics
 	TotalClimbs int `json:"total_climbs"`
@@ -131,11 +131,11 @@ func (ts *TrainingSession) ToTrainingSessionResponse() *TrainingSessionResponse 
 		}
 	}
 
-	// Include boulders if loaded
-	if len(ts.Boulders) > 0 {
-		response.Boulders = make([]BoulderResponse, len(ts.Boulders))
-		for i, boulder := range ts.Boulders {
-			response.Boulders[i] = BoulderResponse{
+	// Include indoor boulders if loaded
+	if len(ts.IndoorBoulders) > 0 {
+		response.IndoorBoulders = make([]IndoorBoulderResponse, len(ts.IndoorBoulders))
+		for i, boulder := range ts.IndoorBoulders {
+			response.IndoorBoulders[i] = IndoorBoulderResponse{
 				ID:                boulder.ID,
 				TrainingSessionID: boulder.TrainingSessionID,
 				Grade:             boulder.Grade,
@@ -168,13 +168,13 @@ func (ts *TrainingSession) ToTrainingSessionResponse() *TrainingSessionResponse 
 	return response
 }
 
-// ToBoulder converts a BoulderRequest to a Boulder model
-func (br *BoulderRequest) ToBoulder() *Boulder {
-	return &Boulder{
-		Grade:    br.Grade,
-		ColorTag: br.ColorTag,
-		Outcome:  br.Outcome,
-		Notes:    br.Notes,
+// ToIndoorBoulder converts an IndoorBoulderRequest to an IndoorBoulder model
+func (ibr *IndoorBoulderRequest) ToIndoorBoulder() *IndoorBoulder {
+	return &IndoorBoulder{
+		Grade:    ibr.Grade,
+		ColorTag: ibr.ColorTag,
+		Outcome:  ibr.Outcome,
+		Notes:    ibr.Notes,
 	}
 }
 

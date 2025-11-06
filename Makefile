@@ -26,6 +26,7 @@ ECR_REGISTRY := 650503560686.dkr.ecr.us-east-1.amazonaws.com
 ECR_REPOSITORY := crux-api
 ECS_CLUSTER := crux-api-cluster-dev
 ECS_SERVICE := crux-api-service-dev
+ECS_SERVICE_LOG_GROUP := crux-api-logs-dev
 
 # Go files for formatting and linting
 GO_FILES := $(shell find . -name '*.go' -not -path "./vendor/*")
@@ -333,8 +334,8 @@ service-logs:
 		echo "$(COLOR_RED)Error: AWS CLI is not installed$(COLOR_RESET)"; \
 		exit 1; \
 	fi
-	@echo "$(COLOR_YELLOW)Log group: /ecs/$(ECS_SERVICE)$(COLOR_RESET)"
-	@aws logs tail /ecs/$(ECS_SERVICE) \
+	@echo "$(COLOR_YELLOW)Log group: /ecs/$(ECS_SERVICE_LOG_GROUP)$(COLOR_RESET)"
+	@aws logs tail /ecs/$(ECS_SERVICE_LOG_GROUP) \
 		--follow \
 		--region $(AWS_REGION) \
 		--format short
@@ -342,8 +343,3 @@ service-logs:
 deploy: image-push service-deploy
 	@echo ""
 	@echo "$(COLOR_GREEN)$(COLOR_BOLD)✓ Complete deployment pipeline finished!$(COLOR_RESET)"
-	@echo ""
-	@echo "$(COLOR_YELLOW)Next steps:$(COLOR_RESET)"
-	@echo "  1. Run 'make ecs-status' to monitor deployment"
-	@echo "  2. Run 'make ecs-logs' to watch application logs"
-	@echo "  3. Test your API endpoint once deployment completes"

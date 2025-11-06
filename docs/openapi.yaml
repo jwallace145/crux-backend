@@ -23,7 +23,7 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development server - Use this to test local changes
-  - url: http://dev-api.cruxproject.io
+  - url: https://dev-api.cruxproject.io
     description: Development server - Use this to test deployed changes
 
 tags:
@@ -437,10 +437,12 @@ paths:
         - Gyms
       summary: Get gyms
       description: |
-        Retrieve climbing gym information.
+        Retrieve climbing gyms in the database filtered by optional parameters.
 
-        If the `id` query parameter is provided, returns a specific gym.
-        If no `id` is provided, returns all gyms in the database ordered by name.
+        This endpoint returns a list of the climbing gyms matching the specified
+        criteria. The caller can specify `id`, `state`, and `city` to filter the
+        results given the optional parameters. If no parameters are provided, all
+        climbing gyms are returned.
 
         Requires authentication.
       operationId: getGyms
@@ -455,6 +457,22 @@ paths:
             type: integer
             format: uint
             example: 1
+        - name: state
+          in: query
+          required: false
+          description: Optional state to filter gyms by location
+          schema:
+            type: string
+            maxLength: 100
+            example: "New York"
+        - name: city
+          in: query
+          required: false
+          description: Optional city to filter gyms by location
+          schema:
+            type: string
+            maxLength: 100
+            example: "Brooklyn"
       responses:
         '200':
           description: Gym(s) retrieved successfully
@@ -996,7 +1014,7 @@ components:
           format: date-time
           description: Last update timestamp
 
-    BoulderRequest:
+    IndoorBoulderRequest:
       type: object
       required:
         - grade
@@ -1011,11 +1029,11 @@ components:
         color_tag:
           type: string
           maxLength: 50
-          description: Optional color tag for the boulder
+          description: Optional color tag for the indoor boulder
           example: "Blue"
         outcome:
           type: string
-          description: Outcome of the boulder attempt
+          description: Outcome of the indoor boulder attempt
           enum:
             - Fell
             - Flash
@@ -1025,7 +1043,7 @@ components:
         notes:
           type: string
           maxLength: 1000
-          description: Personal notes about this boulder
+          description: Personal notes about this indoor boulder
           example: "Nice overhang problem"
 
     RopeClimbRequest:
@@ -1092,18 +1110,18 @@ components:
             format: uint
           description: Optional list of user IDs who were training partners
           example: [2, 3]
-        boulders:
+        indoor_boulders:
           type: array
           items:
-            $ref: '#/components/schemas/BoulderRequest'
-          description: List of boulder problems climbed during the session
+            $ref: '#/components/schemas/IndoorBoulderRequest'
+          description: List of indoor boulder problems climbed during the session
         rope_climbs:
           type: array
           items:
             $ref: '#/components/schemas/RopeClimbRequest'
           description: List of rope climbs completed during the session
 
-    BoulderResponse:
+    IndoorBoulderResponse:
       type: object
       required:
         - id
@@ -1116,7 +1134,7 @@ components:
         id:
           type: integer
           format: uint
-          description: Boulder ID
+          description: Indoor boulder ID
           example: 1
         training_session_id:
           type: integer
@@ -1129,11 +1147,11 @@ components:
           example: "V5"
         color_tag:
           type: string
-          description: Color tag
+          description: Color tag for indoor boulder
           example: "Blue"
         outcome:
           type: string
-          description: Outcome
+          description: Outcome of indoor boulder attempt
           enum:
             - Fell
             - Flash
@@ -1142,7 +1160,7 @@ components:
           example: "Flash"
         notes:
           type: string
-          description: Notes
+          description: Notes about indoor boulder
           example: "Nice overhang problem"
         created_at:
           type: string
@@ -1646,11 +1664,11 @@ components:
           items:
             $ref: '#/components/schemas/PartnerResponse'
           description: Training partners
-        boulders:
+        indoor_boulders:
           type: array
           items:
-            $ref: '#/components/schemas/BoulderResponse'
-          description: Boulder problems climbed
+            $ref: '#/components/schemas/IndoorBoulderResponse'
+          description: Indoor boulder problems climbed
         rope_climbs:
           type: array
           items:

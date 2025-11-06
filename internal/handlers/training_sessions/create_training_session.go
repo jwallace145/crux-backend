@@ -119,7 +119,7 @@ func CreateTrainingSession(c *fiber.Ctx) error {
 	if err := db.DB.
 		Preload("Gym").
 		Preload("Partners").
-		Preload("Boulders").
+		Preload("IndoorBoulders").
 		Preload("RopeClimbs").
 		First(trainingSession, trainingSession.ID).Error; err != nil {
 		log.Error("Failed to load training session relationships",
@@ -148,7 +148,7 @@ func validateCreateTrainingSessionRequest(req *models.CreateTrainingSessionReque
 	if err := validateSessionBasicInfo(req); err != nil {
 		return err
 	}
-	if err := validateBoulders(req.Boulders); err != nil {
+	if err := validateIndoorBoulders(req.IndoorBoulders); err != nil {
 		return err
 	}
 	if err := validateRopeClimbs(req.RopeClimbs); err != nil {
@@ -174,35 +174,35 @@ func validateSessionBasicInfo(req *models.CreateTrainingSessionRequest) error {
 	return nil
 }
 
-// validateBoulders validates all boulders in the request
-func validateBoulders(boulders []models.BoulderRequest) error {
+// validateIndoorBoulders validates all indoor boulders in the request
+func validateIndoorBoulders(boulders []models.IndoorBoulderRequest) error {
 	for _, boulder := range boulders {
-		if err := validateBoulder(boulder); err != nil {
+		if err := validateIndoorBoulder(boulder); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// validateBoulder validates a single boulder
-func validateBoulder(boulder models.BoulderRequest) error {
+// validateIndoorBoulder validates a single indoor boulder
+func validateIndoorBoulder(boulder models.IndoorBoulderRequest) error {
 	if boulder.Grade == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Boulder grade is required")
+		return fiber.NewError(fiber.StatusBadRequest, "Indoor boulder grade is required")
 	}
 	if len(boulder.Grade) > 20 {
-		return fiber.NewError(fiber.StatusBadRequest, "Boulder grade must not exceed 20 characters")
+		return fiber.NewError(fiber.StatusBadRequest, "Indoor boulder grade must not exceed 20 characters")
 	}
-	if boulder.Outcome != models.BoulderOutcomeFell &&
-		boulder.Outcome != models.BoulderOutcomeFlash &&
-		boulder.Outcome != models.BoulderOutcomeOnSight &&
-		boulder.Outcome != models.BoulderOutcomeRedpoint {
-		return fiber.NewError(fiber.StatusBadRequest, "Boulder outcome must be 'Fell', 'Flash', 'Onsite', or 'Redpoint'")
+	if boulder.Outcome != models.IndoorBoulderOutcomeFell &&
+		boulder.Outcome != models.IndoorBoulderOutcomeFlash &&
+		boulder.Outcome != models.IndoorBoulderOutcomeOnSight &&
+		boulder.Outcome != models.IndoorBoulderOutcomeRedpoint {
+		return fiber.NewError(fiber.StatusBadRequest, "Indoor boulder outcome must be 'Fell', 'Flash', 'Onsite', or 'Redpoint'")
 	}
 	if boulder.ColorTag != nil && len(*boulder.ColorTag) > 50 {
-		return fiber.NewError(fiber.StatusBadRequest, "Boulder color tag must not exceed 50 characters")
+		return fiber.NewError(fiber.StatusBadRequest, "Indoor boulder color tag must not exceed 50 characters")
 	}
 	if len(boulder.Notes) > 1000 {
-		return fiber.NewError(fiber.StatusBadRequest, "Boulder notes must not exceed 1000 characters")
+		return fiber.NewError(fiber.StatusBadRequest, "Indoor boulder notes must not exceed 1000 characters")
 	}
 	return nil
 }
@@ -332,18 +332,18 @@ func createTrainingSessionWithRelations(trainingSession *models.TrainingSession,
 			}
 		}
 
-		// Create boulders if any
-		if len(req.Boulders) > 0 {
-			boulders := make([]models.Boulder, len(req.Boulders))
-			for i, boulderReq := range req.Boulders {
-				boulder := boulderReq.ToBoulder()
+		// Create indoor boulders if any
+		if len(req.IndoorBoulders) > 0 {
+			indoorBoulders := make([]models.IndoorBoulder, len(req.IndoorBoulders))
+			for i, boulderReq := range req.IndoorBoulders {
+				boulder := boulderReq.ToIndoorBoulder()
 				boulder.TrainingSessionID = trainingSession.ID
-				boulders[i] = *boulder
+				indoorBoulders[i] = *boulder
 			}
-			if err := tx.Create(&boulders).Error; err != nil {
+			if err := tx.Create(&indoorBoulders).Error; err != nil {
 				return err
 			}
-			trainingSession.Boulders = boulders
+			trainingSession.IndoorBoulders = indoorBoulders
 		}
 
 		// Create rope climbs if any

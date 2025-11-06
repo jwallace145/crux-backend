@@ -6,8 +6,9 @@ import (
 
 type Wall struct {
 	gorm.Model
-	Name   string  `gorm:"size:150;not null" json:"name"`
-	CragID uint    `gorm:"not null;index" json:"crag_id"`
-	Crag   Crag    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
-	Routes []Route `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"routes,omitempty"`
+	Name            string           `gorm:"size:150;not null" json:"name"`
+	CragID          uint             `gorm:"not null;index" json:"crag_id"`
+	Crag            Crag             `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	Routes          []Route          `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"routes,omitempty"`
+	OutdoorBoulders []OutdoorBoulder `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"outdoor_boulders,omitempty"`
 }

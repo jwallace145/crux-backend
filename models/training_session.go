@@ -26,16 +26,16 @@ type TrainingSession struct {
 	Partners []User `gorm:"many2many:training_session_partners;" json:"partners,omitempty"`
 
 	// Climbs during this session
-	RopeClimbs []RopeClimb `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"rope_climbs,omitempty"`
-	Boulders   []Boulder   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"boulders,omitempty"`
+	RopeClimbs     []RopeClimb     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"rope_climbs,omitempty"`
+	IndoorBoulders []IndoorBoulder `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"indoor_boulders,omitempty"`
 }
 
-// GetTotalClimbs returns the total number of climbs (ropes + boulders) in the session
+// GetTotalClimbs returns the total number of climbs (ropes + indoor boulders) in the session
 func (ts *TrainingSession) GetTotalClimbs() int {
-	return len(ts.RopeClimbs) + len(ts.Boulders)
+	return len(ts.RopeClimbs) + len(ts.IndoorBoulders)
 }
 
-// GetTotalSends returns the total number of sends (both rope and boulder)
+// GetTotalSends returns the total number of sends (both rope and indoor boulder)
 func (ts *TrainingSession) GetTotalSends() int {
 	sends := 0
 	for _, rc := range ts.RopeClimbs {
@@ -43,8 +43,8 @@ func (ts *TrainingSession) GetTotalSends() int {
 			sends++
 		}
 	}
-	for _, b := range ts.Boulders {
-		if b.IsSent() {
+	for _, ib := range ts.IndoorBoulders {
+		if ib.IsSent() {
 			sends++
 		}
 	}
