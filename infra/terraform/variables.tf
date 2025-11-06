@@ -1,3 +1,9 @@
+variable "project_name" {
+  type        = string
+  description = "The name of the CruxProject project."
+  default     = "crux-project"
+}
+
 variable "service_name" {
   type        = string
   description = "The service name of the CruxBackend API, Database, and Network."
