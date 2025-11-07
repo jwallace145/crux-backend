@@ -1,3 +1,10 @@
+## [0.5.2](https://github.com/jwallace145/crux-project/compare/v0.5.1...v0.5.2) (2025-11-07)
+
+
+### Bug Fixes
+
+* bump version with release workflow ([#10](https://github.com/jwallace145/crux-project/issues/10)) ([8a3f463](https://github.com/jwallace145/crux-project/commit/8a3f463288f0966fadf7ee3dc4887a9243c1e483))
+
 ## [0.5.1](https://github.com/jwallace145/crux-project/compare/v0.5.0...v0.5.1) (2025-11-07)
 
 
