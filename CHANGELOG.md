@@ -1,3 +1,10 @@
+## [0.5.9](https://github.com/jwallace145/crux-project/compare/v0.5.8...v0.5.9) (2025-11-07)
+
+
+### Bug Fixes
+
+* update ecs service details for cicd ([#18](https://github.com/jwallace145/crux-project/issues/18)) ([8767473](https://github.com/jwallace145/crux-project/commit/8767473d0637c8f42ea0ec8b4871bc79019c593c))
+
 ## [0.5.8](https://github.com/jwallace145/crux-project/compare/v0.5.7...v0.5.8) (2025-11-07)
 
 
