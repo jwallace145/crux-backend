@@ -176,14 +176,26 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
     resources = ["*"]
   }
 
-  # S3 - Terraform State
+  # S3 - For Terraform State and Creating/Managing Buckets
   statement {
     effect = "Allow"
     actions = [
       "s3:ListBucket",
       "s3:GetObject",
       "s3:PutObject",
-      "s3:DeleteObject"
+      "s3:DeleteObject",
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:GetBucketLocation",
+      "s3:GetBucketPolicy",
+      "s3:PutBucketPolicy",
+      "s3:DeleteBucketPolicy",
+      "s3:GetBucketVersioning",
+      "s3:PutBucketVersioning",
+      "s3:GetBucketAcl",
+      "s3:PutBucketAcl",
+      "s3:GetEncryptionConfiguration",
+      "s3:PutEncryptionConfiguration"
     ]
     resources = ["*"]
   }
