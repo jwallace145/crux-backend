@@ -116,6 +116,7 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "iam:GetPolicyVersion",
       "iam:GetPolicy",
       "iam:CreatePolicy",
+      "iam:CreatePolicyVersion",
       "iam:DeletePolicy",
       "iam:ListPolicyVersions",
       "iam:PassRole",
