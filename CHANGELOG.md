@@ -1,3 +1,10 @@
+## [0.5.10](https://github.com/jwallace145/crux-project/compare/v0.5.9...v0.5.10) (2025-11-07)
+
+
+### Bug Fixes
+
+* associate training sessions to indoor boulders ([#20](https://github.com/jwallace145/crux-project/issues/20)) ([813e97e](https://github.com/jwallace145/crux-project/commit/813e97ef32d073845e23b4016d621f0c5e022bf9))
+
 ## [0.5.9](https://github.com/jwallace145/crux-project/compare/v0.5.8...v0.5.9) (2025-11-07)
 
 
