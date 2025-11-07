@@ -3,7 +3,8 @@
 # ======================================================
 
 module "cicd" {
-  source       = "./modules/cicd-user"
+  source = "./modules/cicd-user"
+
   project_name = var.project_name
   environment  = var.environment
 }
