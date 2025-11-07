@@ -207,7 +207,7 @@ resource "aws_s3_bucket_policy" "this" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      for stmt in local.all_statements : {
+      for stmt in local.all_statements : merge({
         Sid    = stmt.sid
         Effect = stmt.effect
         Principal = {
@@ -215,13 +215,16 @@ resource "aws_s3_bucket_policy" "this" {
         }
         Action   = stmt.actions
         Resource = stmt.resources
-        Condition = length(stmt.conditions) > 0 ? {
-          for cond in stmt.conditions :
-          cond.test => {
-            (cond.variable) = cond.values
+        },
+        # Conditionally add the Condition block only if it exists
+        length(stmt.conditions) > 0 ? {
+          Condition = {
+            for cond in stmt.conditions :
+            cond.test => {
+              (cond.variable) = cond.values
+            }
           }
-        } : null
-      }
+      } : {})
     ]
   })
 
