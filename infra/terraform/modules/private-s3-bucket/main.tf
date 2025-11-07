@@ -2,32 +2,44 @@ locals {
   bucket_name = "${var.project_name}-${var.environment}"
 
   # Build read access policy statements
-  read_statements = [
-    for key, access in var.read_access : {
-      sid    = "ReadAccess${replace(title(key), "/[^a-zA-Z0-9]/", "")}"
-      effect = "Allow"
-      principals = {
-        type        = "AWS"
-        identifiers = [access.principal]
-      }
-      actions = [
-        "s3:GetObject",
-        "s3:GetObjectVersion",
-        "s3:ListBucket"
-      ]
-      resources = flatten([
-        [aws_s3_bucket.this.arn],
-        [for prefix in access.prefixes : "${aws_s3_bucket.this.arn}/${trimprefix(prefix, "/")}*"]
-      ])
-      conditions = length(access.prefixes) > 0 ? [
-        {
-          test     = "StringLike"
-          variable = "s3:prefix"
-          values   = access.prefixes
+  read_statements = flatten([
+    for key, access in var.read_access : [
+      {
+        sid    = "ReadAccess${replace(title(key), "/[^a-zA-Z0-9]/", "")}List"
+        effect = "Allow"
+        principals = {
+          type        = "AWS"
+          identifiers = [access.principal]
         }
-      ] : []
-    }
-  ]
+        actions   = ["s3:ListBucket"]
+        resources = [aws_s3_bucket.this.arn]
+        conditions = length(access.prefixes) > 0 ? [
+          {
+            test     = "StringLike"
+            variable = "s3:prefix"
+            values   = access.prefixes
+          }
+        ] : []
+      },
+
+      {
+        sid    = "ReadAccess${replace(title(key), "/[^a-zA-Z0-9]/", "")}Objects"
+        effect = "Allow"
+        principals = {
+          type        = "AWS"
+          identifiers = [access.principal]
+        }
+        actions = [
+          "s3:GetObject",
+          "s3:GetObjectVersion"
+        ]
+        resources = flatten([
+          for prefix in access.prefixes : "${aws_s3_bucket.this.arn}/${trimprefix(prefix, "/")}*"
+        ])
+        conditions = []
+      }
+    ]
+  ])
 
   # Build write access policy statements
   write_statements = [
