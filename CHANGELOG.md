@@ -1,3 +1,10 @@
+## [0.5.3](https://github.com/jwallace145/crux-project/compare/v0.5.2...v0.5.3) (2025-11-07)
+
+
+### Bug Fixes
+
+* auto approve terraform jobs ([#11](https://github.com/jwallace145/crux-project/issues/11)) ([c00a2e1](https://github.com/jwallace145/crux-project/commit/c00a2e1100962cfd16da6248e619e96767356e2c))
+
 ## [0.5.2](https://github.com/jwallace145/crux-project/compare/v0.5.1...v0.5.2) (2025-11-07)
 
 
