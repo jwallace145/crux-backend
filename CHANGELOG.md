@@ -1,3 +1,10 @@
+## [0.6.4](https://github.com/jwallace145/crux-project/compare/v0.6.3...v0.6.4) (2025-11-07)
+
+
+### Bug Fixes
+
+* update cicd user s3 permissmions ([#26](https://github.com/jwallace145/crux-project/issues/26)) ([84db6e2](https://github.com/jwallace145/crux-project/commit/84db6e2028fead8534b7a93889ae58fefcad6fe9))
+
 ## [0.6.3](https://github.com/jwallace145/crux-project/compare/v0.6.2...v0.6.3) (2025-11-07)
 
 
