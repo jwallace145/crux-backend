@@ -1,3 +1,10 @@
+## [0.6.6](https://github.com/jwallace145/crux-project/compare/v0.6.5...v0.6.6) (2025-11-07)
+
+
+### Bug Fixes
+
+* update media bucket policy ([#28](https://github.com/jwallace145/crux-project/issues/28)) ([4e98f88](https://github.com/jwallace145/crux-project/commit/4e98f88e062306722b2ec84a50290b4d13005bb9))
+
 ## [0.6.5](https://github.com/jwallace145/crux-project/compare/v0.6.4...v0.6.5) (2025-11-07)
 
 
