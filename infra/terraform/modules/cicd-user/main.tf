@@ -2,6 +2,21 @@
 # CICD User
 # =========
 
+# The CICD user is responsible for building and deploying the application.
+# It manages infrastructure using Terraform and deploys service updates
+# through AWS ECS API commands. All build and deployment steps are executed
+# from GitHub Actions.
+#
+# Because Terraform requires broad permissions to provision and update
+# infrastructure, this user has been granted the minimum privileges
+# necessary to perform these tasks. However, maintaining strict
+# least-privilege access can be challenging, as required permissions may
+# evolve over time.
+#
+# Caution: Modifying this user's permissions can easily disrupt the CICD
+# process if misconfigured, so changes should be made carefully and tested
+# thoroughly.
+
 resource "aws_iam_user" "cicd_user" {
   name = "${var.project_name}-cicd-user-${var.environment}"
 }
@@ -207,7 +222,9 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "s3:GetReplicationConfiguration",
       "s3:GetEncryptionConfiguration",
       "s3:GetBucketObjectLockConfiguration",
-      "s3:PutBucketTagging"
+      "s3:PutBucketTagging",
+      "s3:GetBucketPublicAccessBlock",
+      "s3:PutBucketPublicAccessBlock"
     ]
     resources = ["*"]
   }
