@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 
+	awsClient "github.com/jwallace145/crux-backend/internal/aws"
 	"github.com/jwallace145/crux-backend/internal/utils"
 
 	"github.com/jwallace145/crux-backend/internal/config"
@@ -30,6 +33,11 @@ func main() {
 
 	// Connect to db and perform schema migrations
 	db.ConnectDB()
+
+	// Initialize S3 client
+	if err := awsClient.InitS3Client(context.Background(), log); err != nil {
+		log.Fatal("Failed to initialize S3 client", zap.Error(err))
+	}
 
 	// Setup routes
 	routes.SetupHealthCheckRoute(app)

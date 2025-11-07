@@ -74,6 +74,15 @@ services:
       ACCESS_TOKEN_SECRET_KEY: "test-access-token-secret-key"
       REFRESH_TOKEN_SECRET_KEY: "test-refresh-token-secret-key"
 
+      # ============
+      # AWS Settings
+      # ============
+
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+
     depends_on:
       db:
         condition: service_healthy
