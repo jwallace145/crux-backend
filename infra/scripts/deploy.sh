@@ -339,7 +339,7 @@ terraform_apply() {
         fi
 
         cd "$TERRAFORM_DIR"
-        terraform apply "tfplan-${env}"
+        terraform apply -auto-approve "tfplan-${env}"
     else
         print_warning "No plan file found, creating new plan..."
         echo ""
@@ -351,7 +351,7 @@ terraform_apply() {
         fi
 
         cd "$TERRAFORM_DIR"
-        terraform apply -var-file="$tfvars_file"
+        terraform apply -auto-approve -var-file="$tfvars_file"
     fi
 
     print_success "Infrastructure applied successfully"
