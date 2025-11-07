@@ -119,6 +119,7 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "iam:CreatePolicy",
       "iam:CreatePolicyVersion",
       "iam:DeletePolicy",
+      "iam:DeletePolicyVersion",
       "iam:ListPolicyVersions",
       "iam:PassRole",
       "iam:TagRole",
@@ -195,7 +196,17 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "s3:GetBucketAcl",
       "s3:PutBucketAcl",
       "s3:GetEncryptionConfiguration",
-      "s3:PutEncryptionConfiguration"
+      "s3:PutEncryptionConfiguration",
+      "s3:GetBucketTagging",
+      "s3:GetBucketCORS",
+      "s3:GetBucketWebsite",
+      "s3:GetAccelerateConfiguration",
+      "s3:GetBucketRequestPayment",
+      "s3:GetBucketLogging",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:GetEncryptionConfiguration",
+      "s3:GetBucketObjectLockConfiguration"
     ]
     resources = ["*"]
   }
