@@ -45,39 +45,6 @@ These are the essential features that define the product. Use this list to guide
 
 **Status:** 🚧 Not Started
 
----
-
-## Tech Stack
-
-### Backend
-- **Language:** Go 1.24+
-- **API Framework:** [Fiber](https://gofiber.io/) - Fast, Express-inspired web framework
-- **ORM:** [GORM](https://gorm.io/) - Object-relational mapping
-- **Authentication:** JWT tokens with bcrypt password hashing
-- **Logging:** [Uber Zap](https://github.com/uber-go/zap) - Structured logging
-
-### Database
-- **Primary:** [PostgreSQL 15](https://www.postgresql.org/)
-- **ORM:** GORM with auto-migrations
-- **Local Development:** Docker Compose
-- **Production:** AWS RDS PostgreSQL
-
-### Infrastructure
-- **Cloud Provider:** AWS
-- **Container Orchestration:** ECS Fargate
-- **Load Balancing:** Application Load Balancer (ALB)
-- **Networking:** VPC with public/private subnets
-- **Infrastructure as Code:** Terraform
-- **Container Registry:** Amazon ECR
-- **DNS:** Route53
-- **Debugging:** EC2 Bastion Host
-
-### Development Tools
-- **Containerization:** Docker & Docker Compose
-- **Live Reload:** [Air](https://github.com/cosmtrek/air)
-- **Linting:** [golangci-lint](https://golangci-lint.run/)
-- **Pre-commit Hooks:** [pre-commit](https://pre-commit.com/)
-- **Task Runner:** Make
 
 ## Architecture
 
