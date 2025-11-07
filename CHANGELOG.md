@@ -1,3 +1,10 @@
+## [0.5.5](https://github.com/jwallace145/crux-project/compare/v0.5.4...v0.5.5) (2025-11-07)
+
+
+### Bug Fixes
+
+* grant additional iam permissions to cicd user ([#13](https://github.com/jwallace145/crux-project/issues/13)) ([ae4454a](https://github.com/jwallace145/crux-project/commit/ae4454a59863f22cf096eee49d59de2a83fb5dcb))
+
 ## [0.5.4](https://github.com/jwallace145/crux-project/compare/v0.5.3...v0.5.4) (2025-11-07)
 
 
