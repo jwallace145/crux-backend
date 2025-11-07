@@ -14,7 +14,7 @@ import (
 
 var (
 	// ServiceName is the name of the API service
-	ServiceName = "crux-backend"
+	ServiceName = "crux-project"
 
 	// APIVersion is the current API version
 	APIVersion = getEnvOrDefault("APP_VERSION", "UNKNOWN")
@@ -33,8 +33,8 @@ func NewResponse(apiName string) *ResponseBuilder {
 	return &ResponseBuilder{
 		response: &models.APIResponse{
 			ServiceName: ServiceName,
-			Version:     APIVersion,
 			Environment: Environment,
+			Version:     APIVersion,
 			APIName:     apiName,
 			Timestamp:   time.Now().UTC(),
 			Status:      models.StatusSuccess,
