@@ -123,7 +123,7 @@ func GetTrainingSessions(c *fiber.Ctx) error {
 		Order("session_date DESC").
 		Preload("Gym").
 		Preload("Partners").
-		Preload("Boulders").
+		Preload("IndoorBoulders").
 		Preload("RopeClimbs").
 		Find(&trainingSessions)
 

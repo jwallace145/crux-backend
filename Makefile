@@ -107,7 +107,11 @@ check-deps:
 
 start: check-deps
 	@echo "$(COLOR_BOLD)Starting all containers...$(COLOR_RESET)"
-	@docker-compose -f $(COMPOSE_FILE) up -d --build
+	@TAG=$$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0") && \
+	BRANCH=$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown") && \
+	APP_VERSION="$$TAG-$$BRANCH" && \
+	echo "$(COLOR_BLUE)Using APP_VERSION: $$APP_VERSION$(COLOR_RESET)" && \
+	APP_VERSION=$$APP_VERSION docker-compose -f $(COMPOSE_FILE) up -d --build
 	@echo "$(COLOR_GREEN)✓ All containers started$(COLOR_RESET)"
 	@$(MAKE) db-wait
 
