@@ -202,7 +202,8 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "s3:GetBucketWebsite",
       "s3:GetAccelerateConfiguration",
       "s3:GetBucketRequestPayment",
-      "s3:GetBucketLogging"
+      "s3:GetBucketLogging",
+      "s3:GetLifecycleConfiguration"
     ]
     resources = ["*"]
   }
