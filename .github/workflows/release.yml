@@ -153,7 +153,7 @@ jobs:
           ENVIRONMENT: dev
         run: |
           TASK_DEFINITION=$(aws ecs describe-task-definition \
-            --task-definition crux-api-${ENVIRONMENT} \
+            --task-definition crux-project-api-${ENVIRONMENT} \
             --query 'taskDefinition' \
             --output json)
 
@@ -172,8 +172,8 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster crux-project-api-cluster-${ENVIRONMENT} \
-            --service crux-project-api-cluster-${ENVIRONMENT} \
-            --task-definition crux-project-api-cluster-${ENVIRONMENT}:${TASK_REVISION} \
+            --service crux-project-api-service-${ENVIRONMENT} \
+            --task-definition crux-project-api-${ENVIRONMENT}:${TASK_REVISION} \
             --force-new-deployment
           echo "Deployment initiated for crux-project-api-service-${ENVIRONMENT} with task revision ${TASK_REVISION}"
 
