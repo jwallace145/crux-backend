@@ -36,14 +36,14 @@ data "aws_ami" "amazon_linux_2023" {
 # ============================================================================
 
 resource "aws_security_group" "bastion" {
-  name        = "${var.service_name}-bastion-sg-${var.environment}"
+  name        = "${var.project_name}-bastion-sg-${var.environment}"
   description = "Security group for bastion host - allows SSH from specified IPs"
   vpc_id      = var.vpc_id
 
   tags = merge(
     var.tags,
     {
-      Name        = "${var.service_name}-bastion-sg-${var.environment}"
+      Name        = "${var.project_name}-bastion-sg-${var.environment}"
       Environment = var.environment
       ManagedBy   = "terraform"
     }
@@ -77,7 +77,7 @@ resource "aws_security_group_rule" "bastion_egress" {
 # ============================================================================
 
 resource "aws_iam_role" "bastion" {
-  name = "${var.service_name}-bastion-role-${var.environment}"
+  name = "${var.project_name}-bastion-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -95,7 +95,7 @@ resource "aws_iam_role" "bastion" {
   tags = merge(
     var.tags,
     {
-      Name        = "${var.service_name}-bastion-role-${var.environment}"
+      Name        = "${var.project_name}-bastion-role-${var.environment}"
       Environment = var.environment
       ManagedBy   = "terraform"
     }
@@ -117,13 +117,13 @@ resource "aws_iam_role_policy_attachment" "bastion_readonly" {
 
 # Create instance profile
 resource "aws_iam_instance_profile" "bastion" {
-  name = "${var.service_name}-bastion-profile-${var.environment}"
+  name = "${var.project_name}-bastion-profile-${var.environment}"
   role = aws_iam_role.bastion.name
 
   tags = merge(
     var.tags,
     {
-      Name        = "${var.service_name}-bastion-profile-${var.environment}"
+      Name        = "${var.project_name}-bastion-profile-${var.environment}"
       Environment = var.environment
       ManagedBy   = "terraform"
     }
@@ -135,13 +135,13 @@ resource "aws_iam_instance_profile" "bastion" {
 # ============================================================================
 
 resource "aws_key_pair" "bastion" {
-  key_name   = "${var.service_name}-bastion-key-${var.environment}"
+  key_name   = "${var.project_name}-bastion-key-${var.environment}"
   public_key = file(var.ssh_public_key_path)
 
   tags = merge(
     var.tags,
     {
-      Name        = "${var.service_name}-bastion-key-${var.environment}"
+      Name        = "${var.project_name}-bastion-key-${var.environment}"
       Environment = var.environment
       ManagedBy   = "terraform"
     }
@@ -181,7 +181,7 @@ resource "aws_instance" "bastion" {
     tags = merge(
       var.tags,
       {
-        Name        = "${var.service_name}-bastion-root-${var.environment}"
+        Name        = "${var.project_name}-bastion-root-${var.environment}"
         Environment = var.environment
         ManagedBy   = "terraform"
       }
@@ -190,7 +190,7 @@ resource "aws_instance" "bastion" {
 
   # User data script for initial setup
   user_data = var.user_data != "" ? var.user_data : templatefile("${path.module}/user_data.sh", {
-    hostname = "${var.service_name}-bastion-${var.environment}"
+    hostname = "${var.project_name}-bastion-${var.environment}"
   })
 
   # Enable termination protection in production
@@ -199,7 +199,7 @@ resource "aws_instance" "bastion" {
   tags = merge(
     var.tags,
     {
-      Name        = "${var.service_name}-bastion-${var.environment}"
+      Name        = "${var.project_name}-bastion-${var.environment}"
       Environment = var.environment
       Role        = "bastion"
       ManagedBy   = "terraform"
@@ -226,7 +226,7 @@ resource "aws_eip" "bastion" {
   tags = merge(
     var.tags,
     {
-      Name        = "${var.service_name}-bastion-eip-${var.environment}"
+      Name        = "${var.project_name}-bastion-eip-${var.environment}"
       Environment = var.environment
       ManagedBy   = "terraform"
     }

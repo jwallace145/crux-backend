@@ -1,6 +1,6 @@
-variable "service_name" {
+variable "project_name" {
   type        = string
-  description = "The service name for tagging resources"
+  description = "The project name for tagging resources"
 }
 
 variable "environment" {

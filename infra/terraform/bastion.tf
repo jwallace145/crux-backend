@@ -7,7 +7,7 @@ module "bastion" {
   source = "./modules/ec2-bastion-host"
 
   # Service details
-  service_name = var.service_name
+  project_name = var.project_name
   environment  = var.environment
 
   # Network configs

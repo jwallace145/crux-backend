@@ -4,12 +4,6 @@ variable "project_name" {
   default     = "crux-project"
 }
 
-variable "service_name" {
-  type        = string
-  description = "The service name of the CruxBackend API, Database, and Network."
-  default     = "crux"
-}
-
 variable "environment" {
   description = "The environment of CruxBackend."
   type        = string
