@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/jwallace145/crux-project/compare/v0.6.6...v0.7.0) (2025-11-07)
+
+
+### Features
+
+* add user profile pictures ([#29](https://github.com/jwallace145/crux-project/issues/29)) ([8f99b42](https://github.com/jwallace145/crux-project/commit/8f99b425e5d6e1ec6da361783a308231a5168831))
+
 ## [0.6.6](https://github.com/jwallace145/crux-project/compare/v0.6.5...v0.6.6) (2025-11-07)
 
 
