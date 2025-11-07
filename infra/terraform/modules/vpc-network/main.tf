@@ -4,7 +4,7 @@ resource "aws_vpc" "network" {
   enable_dns_support   = var.enable_dns_support
 
   tags = {
-    Name = "${var.service_name}-network-${var.environment}"
+    Name = "${var.project_name}-network-${var.environment}"
   }
 }
 
@@ -12,7 +12,7 @@ resource "aws_internet_gateway" "network_igw" {
   vpc_id = aws_vpc.network.id
 
   tags = {
-    Name = "${var.service_name}-igw-${var.environment}"
+    Name = "${var.project_name}-igw-${var.environment}"
   }
 }
 
@@ -25,7 +25,7 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.service_name}-public-subnet-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
+    Name = "${var.project_name}-public-subnet-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
   }
 }
 
@@ -33,7 +33,7 @@ resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.network.id
 
   tags = {
-    Name = "${var.service_name}-public-rt"
+    Name = "${var.project_name}-public-rt"
   }
 }
 
@@ -59,7 +59,7 @@ resource "aws_subnet" "private_subnets" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${var.service_name}-private-subnet-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
+    Name = "${var.project_name}-private-subnet-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
   }
 }
 
@@ -73,7 +73,7 @@ resource "aws_eip" "nat_gateway_eips" {
   domain = "vpc"
 
   tags = {
-    Name = "${var.service_name}-nat-eip-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
+    Name = "${var.project_name}-nat-eip-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
   }
 
   depends_on = [aws_internet_gateway.network_igw]
@@ -94,7 +94,7 @@ resource "aws_nat_gateway" "nat_gateways" {
   ][0]
 
   tags = {
-    Name = "${var.service_name}-nat-gateway-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
+    Name = "${var.project_name}-nat-gateway-${lookup(local.availability_zone_abbreviations, each.value.availability_zone)}"
   }
 
   depends_on = [aws_internet_gateway.network_igw]
@@ -110,7 +110,7 @@ resource "aws_route_table" "private_route_tables" {
   vpc_id = aws_vpc.network.id
 
   tags = {
-    Name = "${var.service_name}-private-rt-${lookup(local.availability_zone_abbreviations, each.value)}"
+    Name = "${var.project_name}-private-rt-${lookup(local.availability_zone_abbreviations, each.value)}"
   }
 }
 
@@ -125,7 +125,7 @@ resource "aws_route" "private_nat_gateway" {
       for key, nat in aws_nat_gateway.nat_gateways :
       nat.tags["Name"] => nat.id
     },
-    "${var.service_name}-nat-gateway-${lookup(local.availability_zone_abbreviations, each.key)}",
+    "${var.project_name}-nat-gateway-${lookup(local.availability_zone_abbreviations, each.key)}",
     # Fallback to first available NAT gateway if no NAT gateway in this AZ
     length(aws_nat_gateway.nat_gateways) > 0 ? values(aws_nat_gateway.nat_gateways)[0].id : null
   )

@@ -6,12 +6,12 @@
 # Required Variables
 # ----------------------------------------------------------------------------
 
-variable "service_name" {
-  description = "Name of the service (e.g., 'crux')"
+variable "project_name" {
+  description = "Name of the project (e.g., 'crux-project')"
   type        = string
 
   validation {
-    condition     = length(var.service_name) > 0 && length(var.service_name) <= 32
+    condition     = length(var.project_name) > 0 && length(var.project_name) <= 32
     error_message = "Service name must be between 1 and 32 characters."
   }
 }

@@ -1,5 +1,5 @@
 locals {
-  api_name = "${var.service_name}-api"
+  api_name = "${var.project_name}-api"
 }
 
 # ============================================================================

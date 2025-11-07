@@ -3,7 +3,6 @@
  ***************************************/
 
 project_name = "crux-project"
-service_name = "crux"
 environment  = "dev"
 
 network = {
@@ -26,10 +25,7 @@ network = {
     }
   }
 
-  # All private subnets in the VPC have a route to the given
-  # NAT Gateway(s)
   nat_gateways = {
-
     # Only use one NAT Gateway in AZ1 to reduce cloud costs
     nat_gateway_az1 = {
       availability_zone = "us-east-1a"
