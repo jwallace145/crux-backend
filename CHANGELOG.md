@@ -1,3 +1,10 @@
+## [0.5.8](https://github.com/jwallace145/crux-project/compare/v0.5.7...v0.5.8) (2025-11-07)
+
+
+### Bug Fixes
+
+* update ecs cluster name in deploy job ([#17](https://github.com/jwallace145/crux-project/issues/17)) ([63d2473](https://github.com/jwallace145/crux-project/commit/63d2473653bb4ef1155a5f215af830d97495ae3e))
+
 ## [0.5.7](https://github.com/jwallace145/crux-project/compare/v0.5.6...v0.5.7) (2025-11-07)
 
 
