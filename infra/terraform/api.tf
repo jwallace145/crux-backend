@@ -62,13 +62,14 @@ module "api" {
   container_port  = var.api.container.port
   enable_ecs_exec = true
   environment_variables = [
+    { name = "APP_VERSION", value = var.app_version },
     { name = "ENVIRONMENT", value = var.environment },
     { name = "PORT", value = var.api.container.port },
     { name = "DB_HOST", value = module.db.address },
     { name = "DB_PORT", value = module.db.port },
     { name = "DB_NAME", value = module.db.database_name },
     { name = "DB_USER", value = module.db.username },
-    { name = "DB_PASSWORD", value = "cruxdbpassword" },
+    { name = "DB_PASSWORD", value = var.db_password },
     { name = "DB_SSLMODE", value = "require" },
     { name = "ACCESS_TOKEN_SECRET_KEY", value = var.access_token_secret_key },
     { name = "REFRESH_TOKEN_SECRET_KEY", value = var.refresh_token_secret_key }

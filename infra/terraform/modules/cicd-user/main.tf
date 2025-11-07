@@ -37,9 +37,11 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "ecr:DescribeRepositories",
       "ecr:CreateRepository",
       "ecr:DeleteRepository",
+      "ecr:GetLifecyclePolicy",
       "ecr:PutLifecyclePolicy",
       "ecr:ListImages",
-      "ecr:DescribeImages"
+      "ecr:DescribeImages",
+      "ecr:ListTagsForResource"
     ]
     resources = ["*"]
   }
@@ -99,6 +101,7 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
   statement {
     effect = "Allow"
     actions = [
+      "iam:GetUser",
       "iam:GetRole",
       "iam:GetRolePolicy",
       "iam:CreateRole",
@@ -109,6 +112,7 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "iam:DeleteRolePolicy",
       "iam:ListRolePolicies",
       "iam:ListAttachedRolePolicies",
+      "iam:ListAttachedUserPolicies",
       "iam:GetPolicyVersion",
       "iam:GetPolicy",
       "iam:CreatePolicy",
@@ -136,7 +140,8 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "logs:GetLogEvents",
       "logs:FilterLogEvents",
       "logs:TagLogGroup",
-      "logs:UntagLogGroup"
+      "logs:UntagLogGroup",
+      "logs:ListTagsForResource"
     ]
     resources = ["*"]
   }
@@ -148,6 +153,7 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "route53:GetHostedZone",
       "route53:ListHostedZones",
       "route53:ListResourceRecordSets",
+      "route53:ListTagsForResource",
       "route53:ChangeResourceRecordSets",
       "route53:GetChange"
     ]
@@ -202,7 +208,34 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "secretsmanager:CreateSecret",
       "secretsmanager:DeleteSecret",
       "secretsmanager:UpdateSecret",
-      "secretsmanager:TagResource"
+      "secretsmanager:TagResource",
+      "secretsmanager:GetResourcePolicy"
+    ]
+    resources = ["*"]
+  }
+
+  # RDS - Database
+  statement {
+    effect = "Allow"
+    actions = [
+      "rds:CreateDBInstance",
+      "rds:DeleteDBInstance",
+      "rds:DescribeDBInstances",
+      "rds:ModifyDBInstance",
+      "rds:CreateDBSubnetGroup",
+      "rds:DeleteDBSubnetGroup",
+      "rds:DescribeDBSubnetGroups",
+      "rds:ModifyDBSubnetGroup",
+      "rds:CreateDBParameterGroup",
+      "rds:DeleteDBParameterGroup",
+      "rds:DescribeDBParameterGroups",
+      "rds:ModifyDBParameterGroup",
+      "rds:CreateDBSnapshot",
+      "rds:DeleteDBSnapshot",
+      "rds:DescribeDBSnapshots",
+      "rds:AddTagsToResource",
+      "rds:ListTagsForResource",
+      "rds:RemoveTagsFromResource"
     ]
     resources = ["*"]
   }

@@ -15,10 +15,13 @@ module "db" {
   db_name          = var.database.name
 
   # Networking configs
-  vpc_id                     = module.network.vpc_id
-  subnet_ids                 = module.network.private_subnet_ids
-  allowed_security_group_ids = [module.alb.ecs_tasks_security_group_id]
-  publicly_accessible        = false # Database in private subnet
+  vpc_id     = module.network.vpc_id
+  subnet_ids = module.network.private_subnet_ids
+  allowed_security_group_ids = concat(
+    [module.alb.ecs_tasks_security_group_id],
+    var.bastion.enabled ? [module.bastion[0].security_group_id] : []
+  )
+  publicly_accessible = false # DB in private subnets
 
   # Database user details
   db_username = var.db_user
