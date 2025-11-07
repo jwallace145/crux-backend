@@ -199,6 +199,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest git tag
+        id: get-version
+        run: |
+          # Get the latest tag, fallback to 'v0.0.0' if no tags exist
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -222,6 +232,7 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          APP_VERSION=${{ steps.get-version.outputs.latest_tag }}
           EOF
 
       - name: Run terraform validate for dev environment

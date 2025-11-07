@@ -38,6 +38,60 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
 
+  terraform-apply-dev:
+    name: Terraform Apply (Dev)
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    environment: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create .env file for terraform
+        run: |
+          cat > .env << EOF
+          ACCESS_TOKEN_SECRET_KEY=${{ secrets.ACCESS_TOKEN_SECRET_KEY }}
+          REFRESH_TOKEN_SECRET_KEY=${{ secrets.REFRESH_TOKEN_SECRET_KEY }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          APP_VERSION=${{ needs.release.outputs.new_release_version }}
+          EOF
+
+      - name: Make deploy script executable
+        run: chmod +x infra/scripts/deploy.sh
+
+      - name: Run terraform apply for dev environment
+        run: |
+          # Run non-interactively by auto-approving the apply
+          # This is safe because the terraform plan was already validated in the PR checks
+          # Using 'yes' to automatically answer all confirmation prompts
+          yes yes | infra/scripts/deploy.sh apply dev
+
+      - name: Upload terraform outputs
+        if: success()
+        run: |
+          cd infra/terraform
+          terraform output > terraform-outputs-dev.txt
+          cat terraform-outputs-dev.txt
+
   deploy:
     needs: release
     if: needs.release.outputs.new_release_published == 'true'

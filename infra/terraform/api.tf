@@ -62,6 +62,7 @@ module "api" {
   container_port  = var.api.container.port
   enable_ecs_exec = true
   environment_variables = [
+    { name = "APP_VERSION", value = var.app_version },
     { name = "ENVIRONMENT", value = var.environment },
     { name = "PORT", value = var.api.container.port },
     { name = "DB_HOST", value = module.db.address },
