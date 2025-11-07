@@ -171,11 +171,11 @@ jobs:
           TASK_REVISION: ${{ steps.task-def.outputs.revision }}
         run: |
           aws ecs update-service \
-            --cluster crux-api-cluster-${ENVIRONMENT} \
-            --service crux-api-service-${ENVIRONMENT} \
-            --task-definition crux-api-${ENVIRONMENT}:${TASK_REVISION} \
+            --cluster crux-project-api-cluster-${ENVIRONMENT} \
+            --service crux-project-api-cluster-${ENVIRONMENT} \
+            --task-definition crux-project-api-cluster-${ENVIRONMENT}:${TASK_REVISION} \
             --force-new-deployment
-          echo "Deployment initiated for crux-api-service-${ENVIRONMENT} with task revision ${TASK_REVISION}"
+          echo "Deployment initiated for crux-project-api-service-${ENVIRONMENT} with task revision ${TASK_REVISION}"
 
       - name: Wait for deployment to complete
         env:
@@ -183,6 +183,6 @@ jobs:
         run: |
           echo "Waiting for service to stabilize..."
           aws ecs wait services-stable \
-            --cluster crux-api-cluster-${ENVIRONMENT} \
-            --services crux-api-service-${ENVIRONMENT}
+            --cluster crux-project-api-cluster-${ENVIRONMENT} \
+            --services crux-project-api-service-${ENVIRONMENT}
           echo "✅ Deployment completed successfully!"
