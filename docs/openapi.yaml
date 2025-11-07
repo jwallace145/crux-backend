@@ -232,7 +232,7 @@ paths:
       description: |
         Retrieve the profile data for the currently authenticated user.
 
-        Requires a valid access token in cookies.
+        Requires a valid access token in cookies. Returns a presigned URL for the profile picture if one exists.
       operationId: getUser
       security:
         - cookieAuth: []
@@ -250,6 +250,92 @@ paths:
                         $ref: '#/components/schemas/UserResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Users
+      summary: Update authenticated user
+      description: |
+        Update the profile data for the currently authenticated user.
+
+        Requires a valid access token in cookies. Supports updating username, email, first name, last name, and profile picture.
+
+        Accepts two content types:
+        - application/json: For updating text fields only (username, email, first_name, last_name)
+        - multipart/form-data: For updating text fields and/or uploading a profile picture
+
+        Profile picture requirements:
+        - Maximum file size: 5MB
+        - Accepted formats: JPEG, PNG, GIF
+        - Field name: profile_picture
+      operationId: updateUser
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              username: johndoe_updated
+              email: john.updated@example.com
+              first_name: Jonathan
+              last_name: Doe
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  description: Updated username
+                  example: johndoe_updated
+                email:
+                  type: string
+                  format: email
+                  maxLength: 100
+                  description: Updated email address
+                  example: john.updated@example.com
+                first_name:
+                  type: string
+                  maxLength: 100
+                  description: Updated first name
+                  example: Jonathan
+                last_name:
+                  type: string
+                  maxLength: 100
+                  description: Updated last name
+                  example: Doe
+                profile_picture:
+                  type: string
+                  format: binary
+                  description: Profile picture image file (JPEG, PNG, or GIF, max 5MB)
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/APIResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -855,6 +941,16 @@ components:
           type: string
           description: Last name
           example: Doe
+        profile_picture_url:
+          type: string
+          format: uri
+          description: Presigned URL for the user's profile picture (only included if profile picture exists)
+          example: "https://crux-project-dev.s3.amazonaws.com/users/1/profile_picture/uuid?X-Amz-Algorithm=..."
+        profile_picture_expires:
+          type: string
+          format: date-time
+          description: Expiration timestamp for the presigned URL (only included if profile picture exists)
+          example: "2024-01-01T13:00:00Z"
         created_at:
           type: string
           format: date-time
@@ -863,6 +959,33 @@ components:
           type: string
           format: date-time
           description: Last update timestamp
+
+    UpdateUserRequest:
+      type: object
+      description: Request body for updating user profile. All fields are optional - only provided fields will be updated.
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Updated username (must be unique)
+          example: johndoe_updated
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Updated email address (must be unique)
+          example: john.updated@example.com
+        first_name:
+          type: string
+          maxLength: 100
+          description: Updated first name
+          example: Jonathan
+        last_name:
+          type: string
+          maxLength: 100
+          description: Updated last name
+          example: Doe
 
     CreateClimbRequest:
       type: object

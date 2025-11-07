@@ -1,10 +1,13 @@
 package users
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	awsClient "github.com/jwallace145/crux-backend/internal/aws"
 	"github.com/jwallace145/crux-backend/internal/db"
 	"github.com/jwallace145/crux-backend/internal/handlers"
 	"github.com/jwallace145/crux-backend/internal/utils"
@@ -59,8 +62,39 @@ func GetUser(c *fiber.Ctx) error {
 		zap.String("username", user.Username),
 	)
 
-	// Return user data
-	response := user.ToUserResponse()
+	// Generate presigned URL if profile picture exists
+	var response *models.UserResponse
+	if user.ProfilePictureURI != "" {
+		s3Key := extractS3KeyFromURI(user.ProfilePictureURI)
+		if s3Key != "" {
+			log.Info("Generating presigned URL for profile picture",
+				zap.String("api", apiName),
+				zap.String("s3_key", s3Key),
+			)
+
+			presignedURL, err := awsClient.GeneratePresignedURL(c.Context(), "crux-project-dev", s3Key, 60)
+			if err != nil {
+				log.Error("Failed to generate presigned URL",
+					zap.Error(err),
+					zap.String("api", apiName),
+				)
+				// Still return success but without presigned URL
+				response = user.ToUserResponse()
+			} else {
+				expiresAt := time.Now().Add(60 * time.Minute).Format("2006-01-02T15:04:05Z07:00")
+				response = user.ToUserResponseWithPresignedURL(presignedURL, expiresAt)
+
+				log.Info("Presigned URL generated successfully",
+					zap.String("api", apiName),
+					zap.String("expires_at", expiresAt),
+				)
+			}
+		} else {
+			response = user.ToUserResponse()
+		}
+	} else {
+		response = user.ToUserResponse()
+	}
 
 	log.Info("Get user completed successfully",
 		zap.String("api", apiName),
