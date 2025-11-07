@@ -1,3 +1,10 @@
+## [0.5.4](https://github.com/jwallace145/crux-project/compare/v0.5.3...v0.5.4) (2025-11-07)
+
+
+### Bug Fixes
+
+* grant additional secrets permissions to cicd user ([#12](https://github.com/jwallace145/crux-project/issues/12)) ([e351732](https://github.com/jwallace145/crux-project/commit/e351732b5df0b0e3874bd013caa92c0226b14aa1))
+
 ## [0.5.3](https://github.com/jwallace145/crux-project/compare/v0.5.2...v0.5.3) (2025-11-07)
 
 
