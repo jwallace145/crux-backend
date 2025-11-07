@@ -205,7 +205,8 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "s3:GetBucketLogging",
       "s3:GetLifecycleConfiguration",
       "s3:GetReplicationConfiguration",
-      "s3:GetEncryptionConfiguration"
+      "s3:GetEncryptionConfiguration",
+      "s3:GetBucketObjectLockConfiguration"
     ]
     resources = ["*"]
   }
