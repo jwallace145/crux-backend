@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/jwallace145/crux-project/compare/v0.5.11...v0.6.0) (2025-11-07)
+
+
+### Features
+
+* create media bucket ([#22](https://github.com/jwallace145/crux-project/issues/22)) ([eebbbc7](https://github.com/jwallace145/crux-project/commit/eebbbc78af51489a5431e7f48338ee0085919017))
+
 ## [0.5.11](https://github.com/jwallace145/crux-project/compare/v0.5.10...v0.5.11) (2025-11-07)
 
 
