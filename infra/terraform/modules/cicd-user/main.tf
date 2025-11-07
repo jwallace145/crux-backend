@@ -199,7 +199,8 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "s3:PutEncryptionConfiguration",
       "s3:GetBucketTagging",
       "s3:GetBucketCORS",
-      "s3:GetBucketWebsite"
+      "s3:GetBucketWebsite",
+      "s3:GetAccelerateConfiguration"
     ]
     resources = ["*"]
   }
