@@ -209,7 +209,8 @@ data "aws_iam_policy_document" "cicd_user_policy_document" {
       "secretsmanager:DeleteSecret",
       "secretsmanager:UpdateSecret",
       "secretsmanager:TagResource",
-      "secretsmanager:GetResourcePolicy"
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:PutSecretValue"
     ]
     resources = ["*"]
   }
