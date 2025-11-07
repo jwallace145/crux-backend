@@ -1,0 +1,3 @@
+locals {
+  POSTGRESQL_DB_PORT = 5432
+}
