@@ -17,7 +17,7 @@ var (
 	ServiceName = "crux-backend"
 
 	// APIVersion is the current API version
-	APIVersion = getEnvOrDefault("API_VERSION", "1.0.0")
+	APIVersion = getEnvOrDefault("APP_VERSION", "UNKNOWN")
 
 	// Environment is the deployment environment (development, staging, production)
 	Environment = getEnvOrDefault("APP_ENV", "development")

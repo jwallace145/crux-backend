@@ -20,6 +20,11 @@ variable "environment" {
   }
 }
 
+variable "app_version" {
+  description = "The version of the CruxProject backend."
+  type        = string
+}
+
 variable "network" {
   description = "The network configurations of CruxBackend VPC and subnets."
 

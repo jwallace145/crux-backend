@@ -94,6 +94,7 @@ ${BOLD}Environment Variables:${NC}
     ACCESS_TOKEN_SECRET_KEY           The secret key used for the API access token (required)
     REFRESH_TOKEN_SECRET_KEY          The secret key used for the API refresh token (required)
     DB_PASSWORD                       Database master password (required)
+    APP_VERSION                       Application version for deployment (defaults to 'dev' if not set)
     AWS_PROFILE                       AWS profile to use (optional)
     AWS_REGION                        AWS region (optional, defaults to tfvars)
 
@@ -266,6 +267,17 @@ check_database_password() {
         export TF_VAR_database_password="$db_password"
     fi
     print_success "Database password configured"
+}
+
+check_app_version() {
+    # Check if app_version was loaded from .env file
+    if [ -z "$TF_VAR_app_version" ]; then
+        print_warning "APP_VERSION not set in .env file"
+        print_info "Using 'dev' as default version"
+        export TF_VAR_app_version="dev"
+    else
+        print_success "App version configured: $TF_VAR_app_version"
+    fi
 }
 
 terraform_init() {
@@ -459,6 +471,7 @@ main() {
     if [ "$action" != "output" ] && [ "$action" != "validate" ]; then
         check_jwt_secrets
         check_database_password
+        check_app_version
     fi
 
     # Initialize with environment-specific backend

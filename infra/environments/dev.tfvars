@@ -70,16 +70,11 @@ api = {
 }
 
 database = {
+  name = "crux_project_db"
+
   postgres_version = "16.8"
   instance_class   = "db.t4g.micro"
   multi_az         = false
-
-  name = "cruxdb"
-
-  user = {
-    username = "cruxdbadmin"
-    password = "cruxdbpassword"
-  }
 
   storage = {
     allocated_storage     = 20
