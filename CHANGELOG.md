@@ -1,3 +1,10 @@
+## [0.5.6](https://github.com/jwallace145/crux-project/compare/v0.5.5...v0.5.6) (2025-11-07)
+
+
+### Bug Fixes
+
+* update project name ([#14](https://github.com/jwallace145/crux-project/issues/14)) ([624071d](https://github.com/jwallace145/crux-project/commit/624071d22ee4db126d09878f91dce10c67f5f90a))
+
 ## [0.5.5](https://github.com/jwallace145/crux-project/compare/v0.5.4...v0.5.5) (2025-11-07)
 
 
