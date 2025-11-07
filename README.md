@@ -1,5 +1,7 @@
 # CruxBackend
 
+[![Release and Deploy](https://github.com/jwallace145/crux-project/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/jwallace145/crux-project/actions/workflows/release.yml)
+
 A high-performance rock climbing API built with Go and [Fiber](https://gofiber.io/) that powers web and mobile applications for the climbing community.
 
 ## Overview
