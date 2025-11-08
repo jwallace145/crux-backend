@@ -1,3 +1,10 @@
+## [0.7.1](https://github.com/jwallace145/crux-project/compare/v0.7.0...v0.7.1) (2025-11-08)
+
+
+### Bug Fixes
+
+* improve user profile picture storage organization ([#30](https://github.com/jwallace145/crux-project/issues/30)) ([744cb8a](https://github.com/jwallace145/crux-project/commit/744cb8af2aab2ab85e5245df2e3db3c1726687b7))
+
 # [0.7.0](https://github.com/jwallace145/crux-project/compare/v0.6.6...v0.7.0) (2025-11-07)
 
 
