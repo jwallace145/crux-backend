@@ -376,7 +376,8 @@ func uploadProfilePictureToS3(c *fiber.Ctx, apiName string, userID uint, fileByt
 	log := utils.GetLoggerFromContext(c)
 
 	pictureID := uuid.New().String()
-	s3Key := fmt.Sprintf("users/%d/profile_picture/%s", userID, pictureID)
+	ext := getFileExtensionFromContentType(contentType)
+	s3Key := fmt.Sprintf("users/id=%d/profile_picture/%s%s", userID, pictureID, ext)
 
 	log.Info("Uploading profile picture to S3",
 		zap.String("api", apiName),
@@ -393,6 +394,24 @@ func uploadProfilePictureToS3(c *fiber.Ctx, apiName string, userID uint, fileByt
 	}
 
 	return s3URI, nil
+}
+
+// getFileExtensionFromContentType returns the file extension for a given content type
+func getFileExtensionFromContentType(contentType string) string {
+	extensions := map[string]string{
+		"image/jpeg": ".jpg",
+		"image/jpg":  ".jpg",
+		"image/png":  ".png",
+		"image/gif":  ".gif",
+		"image/webp": ".webp",
+	}
+
+	if ext, ok := extensions[contentType]; ok {
+		return ext
+	}
+
+	// Fallback to .jpg if unknown
+	return ".jpg"
 }
 
 // saveUserUpdates saves the user updates to the database

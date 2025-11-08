@@ -167,7 +167,10 @@ db-migrate: start db-wait
 db-reset:
 	@echo "$(COLOR_RED)$(COLOR_BOLD)WARNING: This will DELETE ALL DATA in the database!$(COLOR_RESET)"
 	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-	@$(MAKE) db-reset-force
+	@echo "$(COLOR_BOLD)Resetting database...$(COLOR_RESET)"
+	@docker exec $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	@echo "$(COLOR_GREEN)✓ Database reset complete$(COLOR_RESET)"
+	@$(MAKE) db-migrate
 
 api-shell:
 	@echo "$(COLOR_BOLD)Opening shell in API container...$(COLOR_RESET)"
